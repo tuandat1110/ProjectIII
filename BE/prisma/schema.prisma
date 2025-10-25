@@ -14,17 +14,85 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
 
 model Account {
-  id Int @id @default(autoincrement())
-  email String
-  password String
-  createAt DateTime @default(now())
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  password       String
+  createdAt      DateTime        @default(now())
+  role           Role
+  houses         House[]
+  devicesInRooms DevicesInRoom[]
+  sensorsInRooms SensorsInRoom[]
+}
+
+model House {
+  id          Int     @id @default(autoincrement())
+  name        String
+  address     String
+  description String
+  accountId   Int
+  account     Account @relation(fields: [accountId], references: [id])
+  rooms       Room[]
+}
+
+model Room {
+  id             Int             @id @default(autoincrement())
+  name           String
+  description    String
+  houseId        Int
+  house          House           @relation(fields: [houseId], references: [id])
+  devicesInRooms DevicesInRoom[]
+  sensorsInRooms SensorsInRoom[]
+}
+
+model Device {
+  id             Int             @id @default(autoincrement())
+  name           String
+  type           String
+  pin            String
+  ipAddress      String
+  status         Boolean
+  lastUpdated    DateTime?       @updatedAt
+  devicesInRooms DevicesInRoom[]
+}
+
+model DevicesInRoom {
+  id        Int     @id @default(autoincrement())
+  deviceId  Int
+  roomId    Int
+  accountId Int
+  device    Device  @relation(fields: [deviceId], references: [id])
+  room      Room    @relation(fields: [roomId], references: [id])
+  account   Account @relation(fields: [accountId], references: [id])
+
+  @@unique([deviceId, roomId])
 }
 
 model Sensor {
-  id Int @id @default(autoincrement())
-  temperature Float
-  humidity Float
-  creatAt DateTime @default(now())
+  id             Int             @id @default(autoincrement())
+  name           String
+  type           String
+  unit           String
+  ipAddress      String
+  createdAt      DateTime        @default(now())
+  sensorsInRooms SensorsInRoom[]
+}
+
+model SensorsInRoom {
+  id        Int @id @default(autoincrement())
+  sensorId  Int
+  roomId    Int
+  accountId Int
+
+  sensor  Sensor  @relation(fields: [sensorId], references: [id])
+  room    Room    @relation(fields: [roomId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@unique([sensorId, roomId])
 }

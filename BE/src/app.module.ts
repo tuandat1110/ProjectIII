@@ -4,10 +4,12 @@ import { AppService } from './app.service';
 import { AccountModule } from './account/account.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SensorModule } from './sensor/sensor.module';
+import { MqttService } from './mqtt/mqtt.service';
+import { WebsocketGateway } from './websocket/websocket.gateway';
 
 @Module({
   imports: [AccountModule, PrismaModule, SensorModule], //  PrismaService lấy từ đây
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MqttService, WebsocketGateway],
 })
 export class AppModule {}
