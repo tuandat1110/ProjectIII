@@ -15,8 +15,20 @@ export class AccountService {
         const hashedPassword = await bcrypt.hash(accountData.password, 10);
         return this.prisma.account.create({
             data: {
+                name: accountData.name,
                 email: accountData.email,
                 password: hashedPassword,
+            }
+        });
+    }
+
+    async updateAccount(id: number, accountData: CreateAccountDto) {
+        return this.prisma.account.update({
+            where: { id: id },
+            data: {
+                email: accountData.email,
+                name: accountData.name,
+                password: accountData.password,
             }
         });
     }

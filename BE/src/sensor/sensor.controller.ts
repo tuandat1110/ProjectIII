@@ -8,15 +8,15 @@ export class SensorController {
 
   // Lắng nghe topic từ MQTT broker
     @EventPattern('sensor/dht11')
-    async handleSensorData(@Payload() data: any) {
+    handleSensorData(@Payload() data: any) {
         console.log('Data received from MQTT:', data);
-        await this.sensorService.saveSensorData(data);
+        //await this.sensorService.saveSensorData(data);
     }
 
-    @Get()
-    async getAll() {
-        return await this.sensorService.getAll();
-    }
+    // @Get()
+    // async getAll() {
+    //     return await this.sensorService.getAll();
+    // }
 
 
 
