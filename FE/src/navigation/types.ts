@@ -1,10 +1,11 @@
-import { CompositeScreenProps } from "@react-navigation/native";
+// import { CompositeScreenProps } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 export type RootStackParamList = {
     Main: undefined;
     Login: undefined;
     Signup: undefined;
+    MainTab: undefined;
 }
 
 /** Tab params (nếu dùng tab) */
