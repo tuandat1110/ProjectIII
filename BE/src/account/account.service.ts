@@ -38,5 +38,11 @@ export class AccountService {
             where: { id: id }
         });
     }
+
+    async getHousesByAccountId(id: number) {
+        return this.prisma.house.findMany({
+            where: { accountId: id }
+        });
+    }
     
 }

@@ -7,9 +7,18 @@ import { SensorModule } from './sensor/sensor.module';
 import { MqttService } from './mqtt/mqtt.service';
 import { WebsocketGateway } from './websocket/websocket.gateway';
 import { AuthModule } from './auth/auth.module';
+import { HouseModule } from './house/house.module';
+import { RoomModule } from './room/room.module';
 
 @Module({
-  imports: [AccountModule, PrismaModule, SensorModule, AuthModule], //  PrismaService lấy từ đây
+  imports: [
+    AccountModule, 
+    PrismaModule, 
+    SensorModule, 
+    AuthModule, 
+    HouseModule, 
+    RoomModule
+  ], 
   controllers: [AppController],
   providers: [AppService, MqttService, WebsocketGateway],
 })
