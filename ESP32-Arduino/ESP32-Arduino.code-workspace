@@ -1,7 +1,8 @@
 {
 	"folders": [
 		{
-			"path": ".."
+			"name": "ESP32-Arduino",
+			"path": "."
 		}
 	],
 	"settings": {}
