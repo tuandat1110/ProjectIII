@@ -29,14 +29,14 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  /*const microservice = app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.MQTT,
-    options: {
-      url: 'http://localhost:1883',
-    }
-  })
+  // const microservice = app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.MQTT,
+  //   options: {
+  //     url: 'http://localhost:1883',
+  //   }
+  // })
 
-  await app.startAllMicroservices();*/
+  await app.startAllMicroservices();
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
