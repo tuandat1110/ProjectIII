@@ -1,18 +1,52 @@
-import { PermissionsAndroid, Platform, View } from "react-native";
+import { FlatList, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import WeatherCard from "../../components/WeatherCard";
 import { useEffect, useState } from "react";
 import socket from "../../socket/socket";
 import Geolocation from 'react-native-geolocation-service';
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
+import RoomCard from "../../components/RoomCard";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const HomeScreen = () => {
+  const roomsData = [
+    { id: "1", name: "Master Bedroom", devices: 4, image: "https://picsum.photos/200/150?1", isOn: true },
+    { id: "2", name: "Living Room", devices: 15, image: "https://picsum.photos/200/150?2", isOn: false },
+    { id: "3", name: "Kitchen", devices: 8, image: "https://picsum.photos/200/150?3", isOn: true },
+    { id: "4", name: "Office", devices: 6, image: "https://picsum.photos/200/150?4", isOn: false },
+    { id: "5", name: "Guest Room", devices: 3, image: "https://picsum.photos/200/150?5", isOn: false },
+    { id: "6", name: "Bathroom", devices: 2, image: "https://picsum.photos/200/150?6", isOn: true },
+    { id: "7", name: "Garage", devices: 5, image: "https://picsum.photos/200/150?7", isOn: false },
+  ];
+
+  const [rooms, setRooms] = useState(roomsData);
+
+  // const toggleSwitch = (id) => {
+  //   setRooms((prevRooms) =>
+  //     prevRooms.map((room) =>
+  //       room.id === id ? { ...room, isOn: !room.isOn } : room
+  //     )
+  //   );
+  // };
+
   const [data, setData] = useState({ temperature: 0, humidity: 0 });
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(null);
   const [nameLocation, setNameLocation] = useState("");
 
   const email = useSelector((state: RootState) => state.auth.email);
+
+  const removePrefix = (name: string) => {
+    if (!name) return "";
+    return name
+      .replace(/^(Phường|Xã|Thị trấn|Quận|Huyện|Thành phố|Tỉnh|Thị xã)\s*/gi, "")
+      .trim();
+  };
+
+  const handleAddRoom = () => {
+    console.log("Thêm phòng mới");
+    // Ở đây bạn có thể mở modal nhập thông tin phòng
+  };
 
   // Lấy dữ liệu cảm biến qua WebSocket
   useEffect(() => {
@@ -83,13 +117,13 @@ const HomeScreen = () => {
   
       const address = data.address;
 
-      const village = address.village || address.suburb || "";
-      const town = address.town || address.county || "";
-      const city_district = address.city_district || "";
-      const city = address.city || address.state || "";
-      const country = address.country || "";
+      const village = removePrefix(address.village || address.suburb || "");
+      const town = removePrefix(address.town || address.county || "");
+      const city_district = removePrefix(address.city_district || "");
+      const city = removePrefix(address.city || address.state || "");
+      //const country = address.country || "";
 
-      const fullLocation = [village, town,city_district, city, country].filter(Boolean).join(", ");
+      const fullLocation = [village, town,city_district, city].filter(Boolean).join(", ");
 
       setNameLocation(fullLocation);
       console.log("Địa chỉ:", fullLocation);
@@ -114,15 +148,64 @@ const HomeScreen = () => {
   };
 
   return (
-    <View>
+    <View style={{ flex: 1}}>
       <WeatherCard
         city={nameLocation || "Đang xác định vị trí..."}
         temperature={data.temperature}
-        description={description}
+        description={"Hom nay troi mua, khong thich hop di choi"}
         humidity={data.humidity}
       />
+      <Text style={styles.allRoom}>
+        Tất cả các phòng
+      </Text>
+      <View style={styles.container}>
+        <FlatList
+          data={[...rooms, { id: "add_button" }]}
+          renderItem={({ item }) => 
+            item.id === "add_button" ? (
+              <TouchableOpacity style={styles.addCard} onPress={handleAddRoom}>
+                <Icon name="add" size={40} color="#007AFF" />
+                <Text style={styles.addText}>Thêm phòng</Text>
+              </TouchableOpacity>
+            ) : (
+            <RoomCard room={item} />
+          )}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{paddingBottom: 100}}
+        />
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  allRoom: {
+    marginHorizontal: 16,
+    color: '#4e89c7ff',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  addCard: {
+    width: "48%",
+    height: 160,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#007AFF",
+  },
+  addText: {
+    marginTop: 8,
+    color: "#007AFF",
+    fontWeight: "bold",
+  },
+})
 
 export default HomeScreen;
