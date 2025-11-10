@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface AuthState {
     isAuthenticated: boolean;
     token: string | null;
-    user: any | null;
+    user: User | null;
 }
 
 const initialState: AuthState = {
@@ -16,7 +16,7 @@ const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        loginSuccess: (state, action: PayloadAction<{ token: string; user: any }>) => {
+        loginSuccess: (state, action: PayloadAction<{ token: string; user: User }>) => {
             state.isAuthenticated = true;
             state.token = action.payload.token;
             state.user = action.payload.user;

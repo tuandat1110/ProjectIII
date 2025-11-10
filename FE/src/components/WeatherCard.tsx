@@ -29,7 +29,7 @@ const WeatherCard = ({
       <View style={styles.row}>
         {/* Bên trái */}
         <View style={styles.left}>
-          <Text style={styles.title}>My Location</Text>
+          <Text style={styles.title}>Vị trí của tôi</Text>
           <Text style={styles.subtitle}>{city}</Text>
 
           <View style={styles.footer}>
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     width: "80%"
   },
   desc: {
-    fontSize: 14,
+    fontSize: 11,
     color: "#fff",
     marginLeft: 6,
     width: "75%",

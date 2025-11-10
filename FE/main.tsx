@@ -7,6 +7,7 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import SignupScreen from './src/screens/auth/SignupScreen';
 import MainTab from './src/navigation/MainTab';
 import MainScreen from './src/screens/MainScreen';
+import Toast from 'react-native-toast-message';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,9 +29,12 @@ const Container = () => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
   return (
-    <NavigationContainer>
-      {isAuthenticated ? <AppStack /> : <AuthStack />}
-    </NavigationContainer>
+    <>
+      <NavigationContainer>
+        {isAuthenticated ? <AppStack /> : <AuthStack />}
+      </NavigationContainer>
+      <Toast />
+    </>
   );
 };
 

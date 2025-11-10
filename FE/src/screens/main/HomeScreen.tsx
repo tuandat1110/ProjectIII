@@ -34,7 +34,8 @@ const HomeScreen = () => {
   const [location, setLocation] = useState(null);
   const [nameLocation, setNameLocation] = useState("");
 
-  const email = useSelector((state: RootState) => state.auth.email);
+  const email = useSelector((state: RootState) => state.auth.user?.email);
+  const userId = useSelector((state: RootState) => state.auth.user?.id);
 
   const removePrefix = (name: string) => {
     if (!name) return "";
@@ -80,7 +81,6 @@ const HomeScreen = () => {
       Geolocation.getCurrentPosition(
         (pos) => {
           setLocation(pos.coords);
-          console.log('Location:', pos.coords);
         },
         (error) => {
           console.log('Error:', error);
@@ -112,9 +112,7 @@ const HomeScreen = () => {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      const data = await res.json();
-      console.log("API response:", data);
-  
+      const data = await res.json(); 
       const address = data.address;
 
       const village = removePrefix(address.village || address.suburb || "");
@@ -149,12 +147,16 @@ const HomeScreen = () => {
 
   return (
     <View style={{ flex: 1}}>
-      <WeatherCard
-        city={nameLocation || "Đang xác định vị trí..."}
-        temperature={data.temperature}
-        description={"Hom nay troi mua, khong thich hop di choi"}
-        humidity={data.humidity}
-      />
+      <TouchableOpacity
+         activeOpacity={0.7}
+      >
+        <WeatherCard
+          city={nameLocation || "Đang xác định vị trí..."}
+          temperature={data.temperature}
+          description={description}
+          humidity={data.humidity}
+        />
+      </TouchableOpacity>
       <Text style={styles.allRoom}>
         Tất cả các phòng
       </Text>

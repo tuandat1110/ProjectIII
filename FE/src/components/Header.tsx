@@ -2,6 +2,9 @@ import { useState } from "react";
 import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 import Icon from "react-native-vector-icons/Ionicons";
 import Ionicons from "react-native-vector-icons/Ionicons"
+import { RootState } from "../store/store";
+import { useSelector } from "react-redux";
+import { useGetHouses } from '../hooks/useHouses';
 
 
 interface IHeader {
@@ -11,7 +14,7 @@ interface IHeader {
 
 const Header = ( {title, nameIcon}: IHeader) => {
     const [visible, setVisible] = useState(false);
-    const [selectedHome, setSelectedHome] = useState("Nhà chính");
+    const [selectedHome, setSelectedHome] = useState("");
     const [homeName, setHomeName] = useState("");
     const [visibleForAddHome, setVisibleForAddHome] = useState(false);
 
@@ -20,10 +23,12 @@ const Header = ( {title, nameIcon}: IHeader) => {
         setVisible(false);
     };
 
-    const homes = ["Nhà chính", "Nhà trọ", "Nhà ba mẹ", "Nhà Đà Lạt"];
+    const userId = useSelector((state: RootState) => state.auth.user?.id);
+    const { data: houses, isLoading, error } = useGetHouses(userId as string);
+    //const homes = ["Nhà chính", "Nhà trọ", "Nhà ba mẹ", "Nhà Đà Lạt"];
 
-    const handleSelect = (home: string) => {
-        setSelectedHome(home);
+    const handleSelect = (home) => {
+        setSelectedHome(home.name);
         setVisible(false);
     };
     return (
@@ -64,33 +69,25 @@ const Header = ( {title, nameIcon}: IHeader) => {
                 >
                     <View style={styles.dropdownList}>
                         <FlatList
-                            data={homes}
-                            keyExtractor={(item) => item}
+                            data={houses || []}
+                            keyExtractor={(item) => item.home_id}
                             renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.item}
-                                    onPress={() => handleSelect(item)}
-                                    >
+                                <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
                                     <Icon
-                                        name={
-                                        item === selectedHome
-                                            ? "home"
-                                            : "home-outline"
-                                        }
+                                        name={item.name === selectedHome ? "home" : "home-outline"}
                                         size={20}
-                                        color={item === selectedHome ? "#007AFF" : "#555"}
+                                        color={item.name === selectedHome ? "#007AFF" : "#555"}
                                     />
                                     <Text
                                         style={[
-                                        styles.itemText,
-                                        {
-                                            color:
-                                            item === selectedHome ? "#007AFF" : "#333",
-                                            fontWeight: item === selectedHome ? "bold" : "400",
-                                        },
+                                            styles.itemText,
+                                            {
+                                                color: item.name === selectedHome ? "#007AFF" : "#333",
+                                                fontWeight: item.name === selectedHome ? "bold" : "400",
+                                            },
                                         ]}
                                     >
-                                        {item}
+                                        {item.name}
                                     </Text>
                                 </TouchableOpacity>
                             )}

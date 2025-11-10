@@ -20,10 +20,11 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/authSlice";
 import authApi from "../../api/authApi";
+import Toast from "react-native-toast-message";
 
 const { width } = Dimensions.get("window");
 
-type MainScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
+type MainScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 const LoginScreen = () => {
     const navigation = useNavigation<MainScreenNavigationProp>();
@@ -57,12 +58,18 @@ const LoginScreen = () => {
       try {
         console.log("Attempting login with:", { email, password });
         const res = await authApi.login(email, password);
-        console.log("Login response:", res);
+        //console.log("Login response:", res);
 
         // res ở đây là res.data từ interceptor
         if (res.data.access_token) {
           dispatch(loginSuccess({ token: res.data.access_token, user: res.data.user }));
-          console.log("Token saved to store:", res.data.access_token);
+          //console.log("Token saved to store:", res.data.access_token);
+          Toast.show({
+            type: 'success',           
+            text1: 'Đăng nhập thành công',
+            position: 'bottom',       
+            visibilityTime: 3000,      
+          })
         } else {
           Alert.alert("Đăng nhập thất bại", res.message || "Không xác định");
         }

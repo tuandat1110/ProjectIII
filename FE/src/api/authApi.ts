@@ -5,7 +5,7 @@ const authApi = {
         console.log(process.env.REACT_APP_API_URL);
         return axiosClient.post('/auth/login', { email, password });
     },
-    signup: (data: { email: string; password: string; name: string }) =>{
+    signup: (data: { email: string; password: string; name: string }) => {
         return axiosClient.post('/auth/signup', data);
     },
 };

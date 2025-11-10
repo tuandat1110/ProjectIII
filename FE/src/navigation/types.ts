@@ -1,4 +1,6 @@
 // import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { CompositeScreenProps } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 export type RootStackParamList = {
@@ -10,18 +12,19 @@ export type RootStackParamList = {
 
 /** Tab params (nếu dùng tab) */
 export type MainTabParamList = {
-  Feed: undefined;
-  Search: { q?: string } | undefined;
-  Settings: undefined;
+  Home: undefined;
+  Device: undefined;
+  Personal: undefined;
+  Notification: undefined;
 };
 
 /** Convenience props for stack screens */
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
   NativeStackScreenProps<RootStackParamList, Screen>;
 
-/** Composite props example: a screen inside tab + stack */
-// export type FeedScreenProps =
-//   CompositeScreenProps<
-//     BottomTabScreenProps<MainTabParamList, 'Feed'>,
-//     NativeStackScreenProps<RootStackParamList>
-//   >;
+/** Dùng cho các màn hình trong Tab nhưng vẫn muốn gọi navigation của RootStack */
+export type MainTabScreenProps<Screen extends keyof MainTabParamList> =
+  CompositeScreenProps<
+    BottomTabScreenProps<MainTabParamList, Screen>,
+    NativeStackScreenProps<RootStackParamList>
+  >;

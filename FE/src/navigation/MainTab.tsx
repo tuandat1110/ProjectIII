@@ -1,24 +1,21 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/main/HomeScreen";
-import SettingScreen from "../screens/main/SettingScreen";
 import DeviceScreen from "../screens/main/DeviceScreen";
+import NotificationScreen from "../screens/main/NotificationScreen";
+import PersonalScreen from "../screens/main/PersonalScreen";
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import Header from "../components/Header";
-
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTab() {
-    function alert(arg: string): void {
-        throw new Error("Function not implemented.");
-    }
 
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                headerShown: true, // ẩn tiêu đề trên đầu
-                tabBarShowLabel: true, // có thể đặt false nếu chỉ muốn icon
+                headerShown: true,
+                tabBarShowLabel: true,
                 tabBarActiveTintColor: '#007AFF',
                 tabBarInactiveTintColor: '#999',
                 tabBarStyle: {
@@ -38,41 +35,100 @@ export default function MainTab() {
                     fontSize: 12,
                     marginBottom: 4,
                 },
-                tabBarIcon: ({ focused, color, size}) => {
+                tabBarIcon: ({ focused, color, size }) => {
                     let iconName;
                     if (route.name === 'Home') {
-                        iconName = focused ? 'home' : 'home-outline'
-                    } else if (route.name === 'Settings') {
-                        iconName = focused ? 'settings' : 'settings-outline';
+                        iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'Device') {
                         iconName = focused ? 'bulb' : 'bulb-outline';
+                    } else if (route.name === 'Notification') {
+                        iconName = focused ? 'notifications' : 'notifications-outline';
+                    } else if (route.name === 'Personal') {
+                        iconName = focused ? 'person' : 'person-outline';
                     }
                     return <Ionicons name={iconName} size={size} color={color} />;
                 }
-            }
-            )}
+            })}
         >
-            <Tab.Screen 
-                name="Home" 
-                component={HomeScreen} 
+            <Tab.Screen
+                name="Home"
+                component={HomeScreen}
                 options={{
-                    header: () => <Header title="Home" nameIcon="home-outline"/>,
+                    header: () => <Header title="Home" nameIcon="home-outline" />,
                 }}
             />
-            <Tab.Screen 
-                name="Settings" 
-                component={SettingScreen} 
+
+            <Tab.Screen
+                name="Device"
+                component={DeviceScreen}
                 options={{
-                    header: () => <Header title="Settings" nameIcon="settings-outline"/>
+                    header: () => <Header title="Device" nameIcon="bulb-outline" />,
                 }}
             />
-            <Tab.Screen 
-                name="Device" 
-                component={DeviceScreen} 
+
+            {/* Nút voice ở giữa */}
+            <Tab.Screen
+                name="VoiceButton"
+                component={() => null}
                 options={{
-                    header: () => <Header title="Device" nameIcon="bulb-outline"/>
+                    tabBarButton: (props) => (
+                        <TouchableOpacity
+                            {...props}
+                            style={styles.voiceWrapper}
+                            activeOpacity={0.85}
+                            onPress={() => console.log("Voice button pressed")}
+                        >
+                            <View style={styles.voiceButton}>
+                                <Ionicons name="mic" size={28} color="#fff" />
+                            </View>
+                        </TouchableOpacity>
+                    ),
+                }}
+            />
+
+
+            <Tab.Screen
+                name="Notification"
+                component={NotificationScreen}
+                options={{
+                    header: () => <Header title="Notification" nameIcon="notifications-outline" />,
+                }}
+            />
+
+            <Tab.Screen
+                name="Personal"
+                component={PersonalScreen}
+                options={{
+                    header: () => <Header title="Personal" nameIcon="settings-outline" />,
                 }}
             />
         </Tab.Navigator>
-    )
+    );
 }
+
+const styles = StyleSheet.create({
+    voiceWrapper: {
+        top: -20, // nổi lên khỏi tab bar
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    voiceButton: {
+        width: 60,
+        height: 60,
+        borderRadius: 34,
+        backgroundColor: '#007AFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+
+        // hiệu ứng shadow đẹp hơn
+        shadowColor: '#007AFF',
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 8,
+
+        // viền mờ nhẹ (tạo cảm giác 3D)
+        borderWidth: 3,
+        borderColor: '#E8F0FE',
+    },
+});
