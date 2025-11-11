@@ -11,6 +11,7 @@ import { HouseModule } from './house/house.module';
 import { RoomModule } from './room/room.module';
 import { WebsocketModule } from './websocket/websocket.module';
 import { MqttModule } from './mqtt/mqtt.module';
+import { DeviceModule } from './device/device.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MqttModule } from './mqtt/mqtt.module';
     RoomModule,
     WebsocketModule,
     MqttModule,
+    DeviceModule,
   ], 
   controllers: [AppController],
   providers: [AppService, MqttService, WebsocketGateway],

@@ -18,4 +18,15 @@ export class RoomService {
         });
     }
 
+    async updateRoom(body: RoomDto,id: number | undefined): Promise<RoomDto> {
+        return await this.prisma.room.update({
+            where: {
+                id: id
+            },
+            data: {
+                ...body
+            }
+        })
+    }
+
 }

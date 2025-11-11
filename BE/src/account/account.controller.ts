@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('accounts')
 export class AccountController {
@@ -26,9 +27,10 @@ export class AccountController {
     async deleteAccount(@Param('id') id: number) {
         return this.accountService.deleteAccount(Number(id));
     }
-
+    
     @Get(':id/houses')
     async getHousesByAccountId(@Param('id') id: number) {
+        console.log(id);
         return this.accountService.getHousesByAccountId(Number(id));
     }
 }

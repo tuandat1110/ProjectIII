@@ -7,17 +7,15 @@ export class SensorController {
   constructor(private readonly sensorService: SensorService) {}
 
   // Lắng nghe topic từ MQTT broker
-    @EventPattern('sensor/dht11')
-    handleSensorData(@Payload() data: any) {
-        console.log('Data received from MQTT:', data);
-        //await this.sensorService.saveSensorData(data);
-    }
+    // @EventPattern('sensor/dht11')
+    // handleSensorData(@Payload() data: any) {
+    //     console.log('Data received from MQTT:', data);
+    //     //await this.sensorService.saveSensorData(data);
+    // }
 
     // @Get()
     // async getAll() {
     //     return await this.sensorService.getAll();
     // }
-
-
 
 }

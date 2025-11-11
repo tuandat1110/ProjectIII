@@ -27,12 +27,11 @@ model Account {
   createdAt      DateTime        @default(now())
   role           Role            @default(USER)
   houses         House[]
-  devicesInRooms DevicesInRoom[]
-  sensorsInRooms SensorsInRoom[]
 }
 
 model House {
   id          Int     @id @default(autoincrement())
+  home_id     String  @unique
   name        String
   address     String
   description String
@@ -45,10 +44,11 @@ model Room {
   id             Int             @id @default(autoincrement())
   name           String
   description    String
+  image          String?
   houseId        Int
   house          House           @relation(fields: [houseId], references: [id])
-  devicesInRooms DevicesInRoom[]
-  sensorsInRooms SensorsInRoom[]
+  devices        Device[]
+  sensors        Sensor[]
 }
 
 model Device {
@@ -59,19 +59,8 @@ model Device {
   ipAddress      String
   status         Boolean
   lastUpdated    DateTime?       @updatedAt
-  devicesInRooms DevicesInRoom[]
-}
-
-model DevicesInRoom {
-  id        Int     @id @default(autoincrement())
-  deviceId  Int
-  roomId    Int
-  accountId Int
-  device    Device  @relation(fields: [deviceId], references: [id])
-  room      Room    @relation(fields: [roomId], references: [id])
-  account   Account @relation(fields: [accountId], references: [id])
-
-  @@unique([deviceId, roomId])
+  roomId         Int
+  room           Room            @relation(fields: [roomId], references: [id])
 }
 
 model Sensor {
@@ -81,18 +70,8 @@ model Sensor {
   unit           String
   ipAddress      String
   createdAt      DateTime        @default(now())
-  sensorsInRooms SensorsInRoom[]
+  sensorId       Int
+  room           Room            @relation(fields: [sensorId], references: [id])
 }
 
-model SensorsInRoom {
-  id        Int @id @default(autoincrement())
-  sensorId  Int
-  roomId    Int
-  accountId Int
 
-  sensor  Sensor  @relation(fields: [sensorId], references: [id])
-  room    Room    @relation(fields: [roomId], references: [id])
-  account Account @relation(fields: [accountId], references: [id])
-
-  @@unique([sensorId, roomId])
-}
