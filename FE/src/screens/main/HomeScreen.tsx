@@ -1,4 +1,4 @@
-import { FlatList, PermissionsAndroid, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Modal, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import WeatherCard from "../../components/WeatherCard";
 import { useEffect, useState } from "react";
 import socket from "../../socket/socket";
@@ -7,20 +7,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import RoomCard from "../../components/RoomCard";
 import Icon from "react-native-vector-icons/Ionicons";
+import { House } from "../../types/house";
+import { useAddRoom, useGetRooms } from "../../hooks/useRooms";
 
 const HomeScreen = () => {
-  const roomsData = [
-    { id: "1", name: "Master Bedroom", devices: 4, image: "https://picsum.photos/200/150?1", isOn: true },
-    { id: "2", name: "Living Room", devices: 15, image: "https://picsum.photos/200/150?2", isOn: false },
-    { id: "3", name: "Kitchen", devices: 8, image: "https://picsum.photos/200/150?3", isOn: true },
-    { id: "4", name: "Office", devices: 6, image: "https://picsum.photos/200/150?4", isOn: false },
-    { id: "5", name: "Guest Room", devices: 3, image: "https://picsum.photos/200/150?5", isOn: false },
-    { id: "6", name: "Bathroom", devices: 2, image: "https://picsum.photos/200/150?6", isOn: true },
-    { id: "7", name: "Garage", devices: 5, image: "https://picsum.photos/200/150?7", isOn: false },
-  ];
-
-  const [rooms, setRooms] = useState(roomsData);
-
   // const toggleSwitch = (id) => {
   //   setRooms((prevRooms) =>
   //     prevRooms.map((room) =>
@@ -28,14 +18,21 @@ const HomeScreen = () => {
   //     )
   //   );
   // };
-
   const [data, setData] = useState({ temperature: 0, humidity: 0 });
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(null);
   const [nameLocation, setNameLocation] = useState("");
+  const [open, setOpen] = useState(false);
+  const [roomName, setRoomName] = useState("");
+  const [descriptionText, setDescriptionText] = useState("");
+  const [image, setImage] = useState("");
 
+  const currentSelectedId = useSelector((state: RootState) => state.house.selectedHomeId);
   const email = useSelector((state: RootState) => state.auth.user?.email);
   const userId = useSelector((state: RootState) => state.auth.user?.id);
+  const { mutate, isPending } = useAddRoom(currentSelectedId as string);
+
+  const { data: rooms, isLoading, error } = useGetRooms(currentSelectedId as string);
 
   const removePrefix = (name: string) => {
     if (!name) return "";
@@ -45,9 +42,26 @@ const HomeScreen = () => {
   };
 
   const handleAddRoom = () => {
-    console.log("Thêm phòng mới");
-    // Ở đây bạn có thể mở modal nhập thông tin phòng
+    setOpen(true);
   };
+
+  const handleSave = () => {
+    if(!roomName.trim() || !currentSelectedId) {
+        return;
+    }
+    mutate({houseId: currentSelectedId,roomData: { name: roomName, description: descriptionText, image: image }}, {
+        onSuccess: () => {
+            setRoomName("");
+            setDescriptionText("");
+            setImage("");
+        },
+        onError: (err) => {
+            console.error("LỖI API:", err);
+            // Hiển thị thông báo lỗi cho người dùng
+        }
+    })
+    setOpen(false);
+  }
 
   // Lấy dữ liệu cảm biến qua WebSocket
   useEffect(() => {
@@ -160,18 +174,66 @@ const HomeScreen = () => {
       <Text style={styles.allRoom}>
         Tất cả các phòng
       </Text>
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={open}
+        onRequestClose={() => setOpen(false)}
+      >
+        <View style={styles.overlay}>
+            <View style={styles.modalBox}>
+                <Text style={styles.title}>Thêm phòng mới</Text>
+                <TextInput
+                    placeholder="Nhập tên phòng..."
+                    placeholderTextColor="black"
+                    value={roomName}
+                    onChangeText={setRoomName}
+                    style={styles.input}
+                />
+                <TextInput
+                    placeholder="Nhập mô tả cho phòng ..."
+                    placeholderTextColor="black"
+                    value={descriptionText}
+                    onChangeText={setDescriptionText}
+                    style={styles.input}
+                />
+                <TextInput
+                    placeholder="Nhập đường dẫn ảnh cho phòng..."
+                    placeholderTextColor="black"
+                    value={image}
+                    onChangeText={setImage}
+                    style={styles.input}
+                />
+                
+                <View style={styles.actions}>
+                    <TouchableOpacity
+                        onPress={() => setOpen(false)}
+                        style={[styles.btn, { backgroundColor: "#ccc" }]}
+                    >
+                        <Text>Hủy</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={handleSave}
+                        style={[styles.btn, { backgroundColor: "#007AFF" }]}
+                    >
+                        <Text style={{ color: "#fff" }}>Lưu</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+      </Modal>
       <View style={styles.container}>
         <FlatList
-          data={[...rooms, { id: "add_button" }]}
+          data={[...(rooms || []), { id: "add_button" }]}
           renderItem={({ item }) => 
             item.id === "add_button" ? (
               <TouchableOpacity style={styles.addCard} onPress={handleAddRoom}>
                 <Icon name="add" size={40} color="#007AFF" />
                 <Text style={styles.addText}>Thêm phòng</Text>
-              </TouchableOpacity>
-            ) : (
-            <RoomCard room={item} />
-          )}
+              </TouchableOpacity>       
+            ) : (          
+                <RoomCard room={item} />
+        )}
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: "space-between" }}
@@ -208,6 +270,44 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "bold",
   },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    width: "80%",
+    elevation: 8,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 20,
+  },
+  actions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  btn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
 })
 
 export default HomeScreen;
+
+

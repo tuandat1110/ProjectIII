@@ -8,6 +8,8 @@ export type RootStackParamList = {
     Login: undefined;
     Signup: undefined;
     MainTab: undefined;
+    Room: undefined;
+    ProfileDetail: undefined;
 }
 
 /** Tab params (nếu dùng tab) */

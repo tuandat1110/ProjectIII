@@ -3,8 +3,10 @@ import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } 
 import Icon from "react-native-vector-icons/Ionicons";
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { RootState } from "../store/store";
-import { useSelector } from "react-redux";
-import { useGetHouses } from '../hooks/useHouses';
+import { useDispatch, useSelector } from "react-redux";
+import { useAddHouse, useGetHouses } from '../hooks/useHouses';
+import { House } from "../types/house";
+import { selectHome } from "../store/houseSlice";
 
 
 interface IHeader {
@@ -14,21 +16,36 @@ interface IHeader {
 
 const Header = ( {title, nameIcon}: IHeader) => {
     const [visible, setVisible] = useState(false);
-    const [selectedHome, setSelectedHome] = useState("");
-    const [homeName, setHomeName] = useState("");
+    const [homeName, setHomeName] = useState<string>("");
+    const [homeId, setHomeId] = useState<string>("");
+    const [address, setAddress] = useState<string>("");
+    const [description, setDescription] = useState<string>("");
     const [visibleForAddHome, setVisibleForAddHome] = useState(false);
-
-    const handleSave = () => {
-        console.log("Tên nhà:", homeName);
-        setVisible(false);
-    };
+    const dispatch = useDispatch();
 
     const userId = useSelector((state: RootState) => state.auth.user?.id);
+    const currentSelectedId = useSelector((state: RootState) => state.house.selectedHomeId);
     const { data: houses, isLoading, error } = useGetHouses(userId as string);
+    const { mutate, isPending } = useAddHouse(userId as string);
     //const homes = ["Nhà chính", "Nhà trọ", "Nhà ba mẹ", "Nhà Đà Lạt"];
 
-    const handleSelect = (home) => {
-        setSelectedHome(home.name);
+    const handleSave = () => {
+        if(!homeName.trim() || !homeId.trim() || !userId) {
+            return;
+        }
+        mutate({userId: userId,houseData: { home_id: homeId, name: homeName, address: address, description: description }}, {
+            onSuccess: () => {
+                setVisibleForAddHome(false);
+                setHomeName("");
+                setHomeId("");
+                setAddress("");
+                setDescription("");
+            }
+        })
+    };
+
+    const handleSelect = (home: House) => {
+        dispatch(selectHome(home.id));
         setVisible(false);
     };
     return (
@@ -74,16 +91,16 @@ const Header = ( {title, nameIcon}: IHeader) => {
                             renderItem={({ item }) => (
                                 <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
                                     <Icon
-                                        name={item.name === selectedHome ? "home" : "home-outline"}
+                                        name={item.id === currentSelectedId ? "home" : "home-outline"}
                                         size={20}
-                                        color={item.name === selectedHome ? "#007AFF" : "#555"}
+                                        color={item.id === currentSelectedId ? "#007AFF" : "#555"}
                                     />
                                     <Text
                                         style={[
                                             styles.itemText,
                                             {
-                                                color: item.name === selectedHome ? "#007AFF" : "#333",
-                                                fontWeight: item.name === selectedHome ? "bold" : "400",
+                                                color: item.id === currentSelectedId ? "#007AFF" : "#333",
+                                                fontWeight: item.id === currentSelectedId ? "bold" : "400",
                                             },
                                         ]}
                                     >
@@ -105,31 +122,56 @@ const Header = ( {title, nameIcon}: IHeader) => {
                 onRequestClose={() => setVisibleForAddHome(false)}
             >
                 <View style={styles.overlay}>
-                <View style={styles.modalBox}>
-                    <Text style={styles.title}>Thêm nhà mới</Text>
+                    <View style={styles.modalBox}>
+                        <Text style={styles.title}>Thêm nhà mới</Text>
 
-                    <TextInput
-                        placeholder="Nhập tên nhà..."
-                        value={homeName}
-                        onChangeText={setHomeName}
-                        style={styles.input}
-                    />
+                        <TextInput
+                            placeholder="Nhập tên nhà..."
+                            placeholderTextColor="black"
+                            value={homeName}
+                            onChangeText={setHomeName}
+                            style={styles.input}
+                        />
 
-                    <View style={styles.actions}>
-                    <TouchableOpacity
-                        onPress={() => setVisibleForAddHome(false)}
-                        style={[styles.btn, { backgroundColor: "#ccc" }]}
-                    >
-                        <Text>Hủy</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={handleSave}
-                        style={[styles.btn, { backgroundColor: "#007AFF" }]}
-                    >
-                        <Text style={{ color: "#fff" }}>Lưu</Text>
-                    </TouchableOpacity>
+                        <TextInput 
+                            placeholder="Nhập id của nhà ..."
+                            placeholderTextColor="black"
+                            value={homeId}
+                            onChangeText={setHomeId}
+                            style={styles.input}
+                        />
+
+                        <TextInput 
+                            placeholder="Nhập địa chỉ của nhà ..."
+                            placeholderTextColor="black"
+                            value={address}
+                            onChangeText={setAddress}
+                            style={styles.input}
+                        />
+
+                        <TextInput 
+                            placeholder="Nhập mô tả cho nhà ..."
+                            placeholderTextColor="black"
+                            value={description}
+                            onChangeText={setDescription}
+                            style={styles.input}
+                        />
+
+                        <View style={styles.actions}>
+                            <TouchableOpacity
+                                onPress={() => setVisibleForAddHome(false)}
+                                style={[styles.btn, { backgroundColor: "#ccc" }]}
+                            >
+                                <Text>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSave}
+                                style={[styles.btn, { backgroundColor: "#007AFF" }]}
+                            >
+                                <Text style={{ color: "#fff" }}>Lưu</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
                 </View>
             </Modal>
         </View>
@@ -213,3 +255,5 @@ const styles = StyleSheet.create({
 });
 
 export default Header;
+
+

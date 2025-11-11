@@ -1,9 +1,18 @@
+import { House } from "../types/house";
 import axiosClient from "./axiosClient";
 
 const houseApi = {
     // Thêm nhà: POST accounts/{id}/houses
-    createHouse: async (userId: string | number, data: any) => {
-        return axiosClient.post(`accounts/${userId}/houses`, data);
+    createHouse: async (userId: string | number, data: House) => {
+        const body = {
+            accountId: userId,
+            ...data,
+        }
+        return axiosClient.post(`/houses`, JSON.stringify(body));
+    },
+
+    getRoom: async (houseId: string | number) => {
+        return axiosClient.get(`houses/${houseId}/rooms`)
     },
     // Sửa nhà: PATCH accounts/{id}/houses/{houseId}
     updateHouse: async (userId: string | number, houseId: string | number, data: any) => {

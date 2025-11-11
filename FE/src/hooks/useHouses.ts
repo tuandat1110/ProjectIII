@@ -1,14 +1,8 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { userKeys } from "../queryKeys"
 import userApi from "../api/userApi";
-
-interface House {
-    id: number,
-    home_id: string,
-    name: string,
-    address: string,
-    description: string,
-}
+import { House } from "../types/house";
+import houseApi from "../api/houseApi";
 
 export const useGetHouses = (userId: string | number) => {
     return useQuery<House[]>({
@@ -21,5 +15,21 @@ export const useGetHouses = (userId: string | number) => {
 
         staleTime: 1000*60*5,
         enabled: !!userId   // Chỉ chạy query khi có userId
+    })
+}
+
+export const useAddHouse = (userId: string | number) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ userId, houseData } : { userId: string | number, houseData: House }) => {
+            return houseApi.createHouse(userId, houseData)
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: userKeys.houses(userId) });
+        },
+        onError: (error) => {
+            console.error("Lỗi khi thêm nhà:", error);
+        }
     })
 }

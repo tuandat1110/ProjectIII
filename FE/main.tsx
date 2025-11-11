@@ -8,6 +8,8 @@ import SignupScreen from './src/screens/auth/SignupScreen';
 import MainTab from './src/navigation/MainTab';
 import MainScreen from './src/screens/MainScreen';
 import Toast from 'react-native-toast-message';
+import RoomScreen from './src/screens/main/RoomScreen';
+import ProfileDetailScreen from './src/screens/main/ProfileDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +24,8 @@ const AuthStack = () => (
 const AppStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="MainTab" component={MainTab} />
+    <Stack.Screen name="Room" component={RoomScreen}/>
+    <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
   </Stack.Navigator>
 );
 

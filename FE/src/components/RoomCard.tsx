@@ -2,15 +2,25 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, Switch, StyleSheet } from "react-native";
 import { Room } from "../types/room";
+import { CompositeNavigationProp, useNavigation } from "@react-navigation/native";
+import { MainTabParamList, RootStackParamList } from "../navigation/types";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 
 interface IRoom {
     room: Room
     //onToggle: (id: string) => {}
 }
 
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Home'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
 export default function RoomCard({ room }: IRoom) {
+  const navigation = useNavigation<NavigationProp>();
   return (
-    <TouchableOpacity style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Room')}>
       <Image source={{ uri: room.image }} style={styles.image} />
       <View style={styles.infoContainer}>
         <Text style={styles.title}>{room.name}</Text>

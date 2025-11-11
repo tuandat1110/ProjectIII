@@ -1,7 +1,8 @@
 export class Room {
-    id: string | undefined;
+    id?: string | undefined;
     name: string | undefined;
-    devices: number | undefined;
+    description: string | undefined;
+    devices?: number | undefined;
     image: string | undefined;
-    isOn: boolean | undefined;
+    isOn?: boolean | undefined;
 }

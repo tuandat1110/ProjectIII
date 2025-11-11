@@ -22,14 +22,14 @@ const MainScreen = () => {
           source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2917/2917995.png' }}
           style={styles.logo}
         />
-        <Text style={styles.headerTitle}>Welcome to Iot smart home</Text>
+        <Text style={styles.headerTitle}>Chào mừng đến với hệ thống Smart Home IoT</Text>
       </LinearGradient>
 
       {/* Nội dung */}
       <View style={styles.content}>
-        <Text style={styles.appTitle}>Fast, Fresh & Reliable</Text>
+        <Text style={styles.appTitle}>Tự động, tiết kiệm, an toàn</Text>
         <Text style={styles.appSubtitle}>
-          Get clean water delivered to your doorstep in 30 minutes.
+          Trải nghiệm ngôi nhà hiện đại với hệ thống IoT thông minh.
         </Text>
 
         {/* Buttons */}
@@ -40,13 +40,13 @@ const MainScreen = () => {
             end={{ x: 1, y: 0 }}
             style={styles.loginButton}
           >
-            <Text style={styles.loginText}>Log In</Text>
+            <Text style={styles.loginText}>Đăng nhập</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Signup')} activeOpacity={0.85}>
           <View style={styles.signupButton}>
-            <Text style={styles.signupText}>Sign Up</Text>
+            <Text style={styles.signupText}>Đăng ký</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 15,
     fontWeight: '700',
     color: '#fff',
     letterSpacing: 0.5,
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   appTitle: {
-    fontSize: 26,
+    fontSize: 25,
     fontWeight: '700',
     color: '#333',
     marginBottom: 8,

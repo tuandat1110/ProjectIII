@@ -7,3 +7,10 @@ export const userKeys = {
   houses: (userId: string | number) => 
     [...userKeys.all, 'houses', userId] as const,
 };
+
+export const houseKeys = {
+  all: ['houses'] as const,
+
+  rooms: (houseId: string | number) => 
+    [...houseKeys.all, 'houses', houseId] as const
+}
