@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image } from "rea
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store"; // Giả định đường dẫn
+import { useNavigation } from '@react-navigation/native';
 
 // Màu sắc tương thích
 const PRIMARY_BLUE = '#4e89c7'; 
@@ -10,13 +11,12 @@ const BACKGROUND_LIGHT = '#F5F5F5';
 const TEXT_DARK = '#333333';
 const BORDER_COLOR = '#E0E0E0';
 
-
-const ProfileDetailScreen = ({ navigation }) => {
+const ProfileDetailScreen = () => {
     const user = useSelector((state: RootState) => state.auth.user); 
     const userName = user?.name || "Người dùng ABC";
     const userEmail = user?.email || "user.abc@example.com";
     
-    // const navigation = useNavigation();
+    const navigation = useNavigation();
 
     // Hàm xử lý nút chỉnh sửa
     const handleEditProfile = () => {
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 50,
+        paddingTop: 15,
         paddingBottom: 15,
         backgroundColor: 'white',
         borderBottomWidth: 1,

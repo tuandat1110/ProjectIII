@@ -2,13 +2,14 @@
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { CompositeScreenProps } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Room } from "../types/room";
 
 export type RootStackParamList = {
     Main: undefined;
     Login: undefined;
     Signup: undefined;
     MainTab: undefined;
-    Room: undefined;
+    Room: Room;
     ProfileDetail: undefined;
 }
 

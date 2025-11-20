@@ -9,4 +9,9 @@ export const roomApi = {
         }
         return axiosClient.post(`/rooms`, JSON.stringify(body));
     },
+
+    getDevices: async (roomId: string | number) => {
+        return axiosClient.get(`rooms/${roomId}/devices`);
+    }
+
 }

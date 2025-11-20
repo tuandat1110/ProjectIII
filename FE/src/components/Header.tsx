@@ -6,7 +6,7 @@ import { RootState } from "../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { useAddHouse, useGetHouses } from '../hooks/useHouses';
 import { House } from "../types/house";
-import { selectHome } from "../store/houseSlice";
+import { selectHome, setHomeInfo } from "../store/houseSlice";
 
 
 interface IHeader {
@@ -27,7 +27,6 @@ const Header = ( {title, nameIcon}: IHeader) => {
     const currentSelectedId = useSelector((state: RootState) => state.house.selectedHomeId);
     const { data: houses, isLoading, error } = useGetHouses(userId as string);
     const { mutate, isPending } = useAddHouse(userId as string);
-    //const homes = ["Nhà chính", "Nhà trọ", "Nhà ba mẹ", "Nhà Đà Lạt"];
 
     const handleSave = () => {
         if(!homeName.trim() || !homeId.trim() || !userId) {
@@ -45,7 +44,7 @@ const Header = ( {title, nameIcon}: IHeader) => {
     };
 
     const handleSelect = (home: House) => {
-        dispatch(selectHome(home.id));
+        dispatch(setHomeInfo({ id: home.id, mac: home.home_id }));
         setVisible(false);
     };
     return (

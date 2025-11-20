@@ -1,51 +1,73 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions } from "react-native";
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions, Image } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { RootStackParamList } from '../../navigation/types';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Room } from '../../types/room';
+import { useControlDevice, useGetDevices } from '../../hooks/useDevice';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
+import socket from '../../socket/socket';
+import { useQueryClient } from '@tanstack/react-query';
+import { roomKeys } from '../../queryKeys';
 
-// Kích thước màn hình để tính toán chiều rộng cho card
 const { width } = Dimensions.get('window');
 
-// Màu sắc tương thích với màn hình Home ban đầu của bạn
-const PRIMARY_BLUE = '#4e89c7'; // Màu xanh chủ đạo (Gần màu trong Text "Tất cả các phòng")
-const BACKGROUND_LIGHT = '#F5F5F5'; // Nền nhẹ
+const PRIMARY_BLUE = '#4e89c7ff'; 
+const BACKGROUND_LIGHT = '#F5F5F5'; 
 const CARD_BACKGROUND = '#FFFFFF';
 const TEXT_DARK = '#333333';
-const ACCENT_ORANGE = '#FF7F00'; // Màu cam cho nút ON/OFF (như trong mẫu)
+const ACCENT_ORANGE = '#FF7F00'; 
 
-// Dữ liệu giả định cho các thiết bị
-const devicesData = [
-    { name: 'Lamp', status: '70%', icon: 'bulb-outline', color: '#000000', isOn: false },
-    { name: 'Smart TV', status: 'On', icon: 'tv-outline', color: '#000000', isOn: true },
-    { name: 'Door', status: 'Lock', icon: 'lock-closed-outline', color: '#000000', isOn: false },
-    { name: 'AC', status: '18°', icon: 'snow-outline', color: '#000000', isOn: true },
-    { name: 'Wi-Fi', status: 'Off', icon: 'wifi-outline', color: '#000000', isOn: false },
-];
+const DeviceCard = ({ device, roomId }) => {
+    const controlDevice = useControlDevice();
+    const queryClient = useQueryClient();
+    const mac = useSelector((state: RootState) => state.house.macAddress); 
 
-// Component Card Thiết bị
-const DeviceCard = ({ device }) => {
-    // Nếu là nút "Add Device"
-    if (device.name === 'Add Device') {
+    useEffect(() => {
+        const handleDeviceUpdate = (payload) => {
+            const { deviceId, pin, status, updatedAt } = payload;
+            if(deviceId && pin) {
+                queryClient.invalidateQueries({ queryKey: roomKeys.devices(roomId) });
+            }
+        };
+
+        socket.on("device_state_updated", handleDeviceUpdate);
+
+        return () => {
+            socket.off("device_state_updated", handleDeviceUpdate); // cleanup khi unmount
+        };
+    }, [roomId, queryClient]);
+
+
+    const handleToggle = () => {
+        const payload = {
+            status: device.status === true ? "OFF" : "ON",
+            deviceId: device.id,
+            pin: device.pin,
+            mac: mac,
+            roomId: String(roomId)
+        };
+        console.log(`Payload: ${JSON.stringify(payload)}`);
+        controlDevice.mutate(payload);
+    }
+    if (device.name === "add_button") {
         return (
             <TouchableOpacity style={styles.deviceCard}>
                 <View style={styles.addIconContainer}>
                     <Icon name="add" size={30} color={PRIMARY_BLUE} />
                 </View>
-                <Text style={styles.addText}>Add Device</Text>
+                <Text style={styles.addText}>Thêm thiết bị</Text>
             </TouchableOpacity>
         );
     }
     
     return (
-        <TouchableOpacity style={styles.deviceCard}>
-            {/* Icon Thiết bị */}
-            <Icon name={device.icon} size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
-
-            {/* Nút Nguồn (On/Off) */}
+        <TouchableOpacity style={styles.deviceCard} onPress={handleToggle}>
+            <Icon name="bulb-outline" size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
             <TouchableOpacity style={styles.powerButton}>
-                <Icon name="power" size={18} color={device.isOn ? ACCENT_ORANGE : '#CCCCCC'} />
+                <Icon name="power" size={18} color={device.status ? ACCENT_ORANGE : '#CCCCCC'} />
             </TouchableOpacity>
-
-            {/* Thông tin */}
             <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>{device.name}</Text>
                 <Text style={styles.cardSubtitle}>{device.status}</Text>
@@ -55,40 +77,47 @@ const DeviceCard = ({ device }) => {
 }
 
 const RoomScreen = () => {
-    // Thêm nút "Add Device" vào cuối danh sách
-    const displayDevices = [...devicesData, { name: 'Add Device', id: 'add' }];
-
+    const route = useRoute();
+    const room: Room = route.params;
+    const navigation = useNavigation();
+    const { data: devices, isPending } = useGetDevices(room.id as string);
     return (
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => { /* navigation.goBack() */ }}>
-                    <Icon name="arrow-back" size={24} color={TEXT_DARK} />
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Icon name="arrow-back" size={24} color={PRIMARY_BLUE} />
                 </TouchableOpacity>
-                <Text style={styles.roomTitle}>Bedroom</Text>
+                <Text style={styles.roomTitle}>{room.name}</Text>
                 <TouchableOpacity>
-                    <Icon name="ellipsis-vertical" size={24} color={TEXT_DARK} />
+                    <Icon name="ellipsis-vertical" size={24} color={PRIMARY_BLUE} />
                 </TouchableOpacity>
-            </View>
-            
-            <ScrollView showsVerticalScrollIndicator={false}>
-                
-                {/* Usage Section (Giả định về Biểu đồ) */}
-                <View style={styles.usageContainer}>
-                    <Text style={styles.usageLabel}>Usage Today</Text>
-                    <Text style={styles.usageValue}>46 kWh</Text>
-                    <View style={styles.chartPlaceholder}>
-                        <Text style={styles.chartText}>[Biểu đồ sử dụng điện ở đây]</Text>
-                        <View style={styles.chartCenter}>
-                             <Text style={styles.chartKwh}>28 kWh</Text>
-                        </View>
-                    </View>
+            </View>   
+            {room.image ? (
+                <View style={styles.roomImageContainer}>
+                    <Image
+                        source={{ uri: room.image }}
+                        style={styles.roomImage}
+                        resizeMode="cover"
+                    />
                 </View>
-
-                {/* Grid Thiết bị */}
+            ) : (
+                <View style={styles.roomImageContainer}>
+                    <Image
+                        source={
+                            room.image 
+                                ? { uri: room.image }
+                                : require('../../assets/livingroom.png')  
+                        }
+                        style={styles.roomImage}
+                        resizeMode="cover"
+                    />
+                </View> )
+            } 
+            <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.deviceGrid}>
-                    {displayDevices.map((device, index) => (
-                        <DeviceCard key={index} device={device} />
+                    {[...(devices || []), { name: "add_button" }]?.map((device, index) => (
+                        <DeviceCard key={device.id || 'add_button'} device={device} roomId={room.id}/>
                     ))}
                 </View>
             </ScrollView>
@@ -101,9 +130,8 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: BACKGROUND_LIGHT, 
         paddingHorizontal: 15,
-        paddingTop: 40,
+        paddingTop: 10
     },
-    // --- Header ---
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -114,51 +142,7 @@ const styles = StyleSheet.create({
     roomTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: TEXT_DARK,
-    },
-    // --- Usage Chart ---
-    usageContainer: {
-        backgroundColor: CARD_BACKGROUND, 
-        borderRadius: 25,
-        padding: 20,
-        marginBottom: 20,
-        backgroundColor: 'rgba(78, 137, 199, 0.1)', // Nền hơi xanh
-        borderColor: PRIMARY_BLUE,
-        borderWidth: 0,
-        paddingBottom: 40,
-    },
-    usageLabel: {
-        fontSize: 16,
-        color: TEXT_DARK,
-        fontWeight: '500',
-    },
-    usageValue: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: TEXT_DARK,
-        alignSelf: 'flex-end',
-        marginTop: -20,
-    },
-    chartPlaceholder: {
-        height: 100,
-        marginTop: 10,
-        backgroundColor: 'transparent',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    chartCenter: {
-         position: 'absolute',
-         top: 30,
-    },
-    chartKwh: {
-        fontSize: 14,
-        color: TEXT_DARK,
-        fontWeight: 'bold',
-    },
-    chartText: {
         color: PRIMARY_BLUE,
-        fontStyle: 'italic',
-        opacity: 0.7
     },
     // --- Device Grid ---
     deviceGrid: {
@@ -217,7 +201,20 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: PRIMARY_BLUE,
-    }
+    },
+    roomImageContainer: {
+        width: '100%',
+        height: 150,
+        borderRadius: 15,
+        overflow: 'hidden',
+        marginBottom: 15,
+        backgroundColor: '#ddd'
+    },
+
+    roomImage: {
+        width: '100%',
+        height: '100%'
+    },
 });
 
 export default RoomScreen;

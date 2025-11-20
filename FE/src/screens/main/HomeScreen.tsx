@@ -1,6 +1,6 @@
 import { FlatList, Modal, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import WeatherCard from "../../components/WeatherCard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import socket from "../../socket/socket";
 import Geolocation from 'react-native-geolocation-service';
 import { useSelector } from "react-redux";
@@ -9,6 +9,7 @@ import RoomCard from "../../components/RoomCard";
 import Icon from "react-native-vector-icons/Ionicons";
 import { House } from "../../types/house";
 import { useAddRoom, useGetRooms } from "../../hooks/useRooms";
+import { AppState } from "react-native";
 
 const HomeScreen = () => {
   // const toggleSwitch = (id) => {
@@ -27,6 +28,9 @@ const HomeScreen = () => {
   const [descriptionText, setDescriptionText] = useState("");
   const [image, setImage] = useState("");
 
+  const appState = useRef(AppState.currentState);
+  const latestPayload = useRef(null);
+
   const currentSelectedId = useSelector((state: RootState) => state.house.selectedHomeId);
   const email = useSelector((state: RootState) => state.auth.user?.email);
   const userId = useSelector((state: RootState) => state.auth.user?.id);
@@ -34,6 +38,7 @@ const HomeScreen = () => {
 
   const { data: rooms, isLoading, error } = useGetRooms(currentSelectedId as string);
 
+  console.log(`Current home: ${currentSelectedId}`);
   const removePrefix = (name: string) => {
     if (!name) return "";
     return name
@@ -65,17 +70,45 @@ const HomeScreen = () => {
 
   // Lấy dữ liệu cảm biến qua WebSocket
   useEffect(() => {
+    const handleAppStateChange = (nextAppState:  "active" | "background" | "inactive") => {
+      // Khi app từ background -> foreground, render dữ liệu mới nhất
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active" &&
+        latestPayload.current
+      ) {
+        const { temperature, humidity } = latestPayload.current.payload;
+        setData({ temperature, humidity });
+        setDescription(generateDescription(temperature, humidity));
+      }
+      appState.current = nextAppState;
+    };
+
+    const appStateListener = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
     socket.on("connect", () => console.log("Connected to WebSocket server"));
+    let lastRenderTime = 0;
     socket.on("sensor_data", (payload) => {
-      const { temperature, humidity } = payload.payload;
-      setData({ temperature, humidity });
-      setDescription(generateDescription(temperature, humidity));
+      latestPayload.current = payload;
+      if (appState.current === "active") {
+        const now = Date.now();
+        if (now - lastRenderTime > 1000) { // render max 1 lần / giây
+          const { temperature, humidity } = payload.payload;
+          setData({ temperature, humidity });
+          setDescription(generateDescription(temperature, humidity));
+          lastRenderTime = now;
+        }
+      }
     });
     socket.on("disconnect", () => console.log("Disconnected from server"));
 
     return () => {
       socket.off("sensor_data");
       socket.disconnect();
+      appStateListener.remove();
     };
   }, []);
 

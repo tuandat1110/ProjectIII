@@ -14,3 +14,10 @@ export const houseKeys = {
   rooms: (houseId: string | number) => 
     [...houseKeys.all, 'houses', houseId] as const
 }
+
+export const roomKeys = {
+  all: ['devices'] as const,
+
+  devices: (roomId: string | number) =>
+  [...roomKeys.all, 'rooms', roomId] as const
+}

@@ -20,7 +20,7 @@ type NavigationProp = CompositeNavigationProp<
 export default function RoomCard({ room }: IRoom) {
   const navigation = useNavigation<NavigationProp>();
   return (
-    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Room')}>
+    <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Room', room)}>
       <Image source={{ uri: room.image }} style={styles.image} />
       <View style={styles.infoContainer}>
         <Text style={styles.title}>{room.name}</Text>
