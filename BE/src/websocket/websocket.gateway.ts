@@ -26,4 +26,8 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     console.log('Gửi dữ liệu tới FE:', data);
     this.server.emit('sensor_data', data);
   }
+
+  sendDeviceStateUpdate(data: { deviceId: number; pin: number; status: boolean; updatedAt: string }) {
+      this.server.emit('device_state_updated', data);
+  }
 }

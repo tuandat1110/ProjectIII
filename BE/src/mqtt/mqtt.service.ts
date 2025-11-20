@@ -1,14 +1,22 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { connect, IClientOptions, IClientPublishOptions, MqttClient } from "mqtt";
 import { WebsocketGateway } from '../websocket/websocket.gateway';
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy{
     private client: MqttClient | null;
     private readonly logger = new Logger(MqttService.name);
-    private readonly topics = "home/house1/livingroom/dht11/data";
+    private readonly topics = [
+        "home/house1/livingroom/dht11/data",   // sensor
+        "home/+/+/+/state"                     // feedback devices, + = wildcard
+    ];
 
-    constructor(private readonly wsGateway: WebsocketGateway) {}
+
+    constructor(
+        private readonly wsGateway: WebsocketGateway,
+        private readonly eventEmitter: EventEmitter2
+    ) {}
 
     onModuleInit() {
         this.connectBroker();
@@ -19,13 +27,13 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
     }
 
     connectBroker() {
-        const url = "http://localhost";
+        const url = "mqtt://192.168.0.101";
         const options: IClientOptions = {
             clientId: "NestjsMqttClient",
             clean: true,
-            reconnectPeriod: 5000,
+            reconnectPeriod: 2000,
             connectTimeout: 30_000,
-            keepalive: 60,
+            keepalive: 30,
             // username: process.env.MQTT_USERNAME,
             // password: process.env.MQTT_PASSWORD,
         }
@@ -60,6 +68,14 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
             }
             this.logger.debug(`Received message on ${topic}: ${payloadStr}`);
             
+            if(topic.includes('/state')) {
+                console.log("Trong mqtt service ");
+                this.eventEmitter.emit("device.state.changed", {
+                    topic,
+                    payload: parsed,
+                    raw: payloadStr,
+                });
+            }
 
             // bat websocket
             try {
