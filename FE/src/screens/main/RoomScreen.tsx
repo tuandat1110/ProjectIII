@@ -1,15 +1,16 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions, Image } from "react-native";
+import React, { memo, useCallback, useEffect, useMemo } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions, Image, Modal, TextInput } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { RootStackParamList } from '../../navigation/types';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Room } from '../../types/room';
-import { useControlDevice, useGetDevices } from '../../hooks/useDevice';
+import { useAddDevice, useControlDevice, useGetDevices } from '../../hooks/useDevice';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import socket from '../../socket/socket';
 import { useQueryClient } from '@tanstack/react-query';
 import { roomKeys } from '../../queryKeys';
+import { Picker } from '@react-native-picker/picker';
 
 const { width } = Dimensions.get('window');
 
@@ -17,12 +18,25 @@ const PRIMARY_BLUE = '#4e89c7ff';
 const BACKGROUND_LIGHT = '#F5F5F5'; 
 const CARD_BACKGROUND = '#FFFFFF';
 const TEXT_DARK = '#333333';
-const ACCENT_ORANGE = '#FF7F00'; 
+const ACCENT_ORANGE = '#FF7F00';
 
-const DeviceCard = ({ device, roomId }) => {
+const TYPE_DATA = [
+    { label: 'Đèn', value: 'light' },
+    { label: 'Quạt', value: 'fan' },
+    { label: 'Điều hòa', value: 'ac' },
+    { label: 'Tivi', value: 'tv' },
+    { label: 'Cửa cuốn', value: 'door' },
+]
+
+const DeviceCard = memo(({ device, roomId }) => {
     const controlDevice = useControlDevice();
     const queryClient = useQueryClient();
     const mac = useSelector((state: RootState) => state.house.macAddress); 
+    const [open, setOpen] = React.useState(false);
+    const [deviceName, setDeviceName] = React.useState('');
+    const [pin, setPin] = React.useState('');
+    const [selectedRoom, setSelectedRoom] = React.useState(TYPE_DATA[0].value);
+    const { mutate, isPending } = useAddDevice(roomId);
 
     useEffect(() => {
         const handleDeviceUpdate = (payload) => {
@@ -37,10 +51,10 @@ const DeviceCard = ({ device, roomId }) => {
         return () => {
             socket.off("device_state_updated", handleDeviceUpdate); // cleanup khi unmount
         };
-    }, [roomId, queryClient]);
+    }, [roomId]);
 
 
-    const handleToggle = () => {
+    const handleToggle = useCallback(() => {
         const payload = {
             status: device.status === true ? "OFF" : "ON",
             deviceId: device.id,
@@ -50,15 +64,96 @@ const DeviceCard = ({ device, roomId }) => {
         };
         console.log(`Payload: ${JSON.stringify(payload)}`);
         controlDevice.mutate(payload);
+    },[device.status, device.id, device.pin, mac, roomId]);
+
+    const handleSave = () => {
+        if(!deviceName.trim() || !pin.trim()) {
+            return;
+        }
+        mutate({ name: deviceName, pin, type: selectedRoom, status: false, ipAddress: ''}, {
+            onSuccess: () => {
+                setDeviceName('');
+                setPin('');
+            },
+            onError: (error) => {
+                console.error("Lỗi khi thêm thiết bị:", error);
+            }
+        });
+        setOpen(false);
     }
+    
     if (device.name === "add_button") {
         return (
-            <TouchableOpacity style={styles.deviceCard}>
-                <View style={styles.addIconContainer}>
-                    <Icon name="add" size={30} color={PRIMARY_BLUE} />
+            <>
+            <Modal
+                transparent={true}
+                animationType="fade"
+                visible={open}
+                onRequestClose={() => setOpen(false)}
+                >
+                <View style={styles.overlay}>
+                    <View style={styles.modalBox}>
+                        <Text style={styles.title}>Thêm thiết bị mới</Text>
+                        <TextInput
+                            placeholder="Nhập tên thiết bị..."
+                            placeholderTextColor="black"
+                            value={deviceName}
+                            onChangeText={setDeviceName}
+                            style={styles.input}
+                        />
+                        <View style={styles.pickerContainer}>
+                            <Text style={styles.label}>Loại thiết bị</Text>
+
+                            <View style={styles.pickerBox}>
+                                <Picker
+                                    selectedValue={selectedRoom}
+                                    onValueChange={setSelectedRoom}
+                                    dropdownIconColor="#4e89c7ff"
+                                    style={styles.picker}
+                                >
+                                    {TYPE_DATA.map((item) => (
+                                        <Picker.Item
+                                            key={item.value}
+                                            label={item.label}
+                                            value={item.value}
+                                        />
+                                    ))}
+                                </Picker>
+                            </View>
+                        </View>
+
+                        <TextInput
+                            placeholder="Nhập chân pin..."
+                            placeholderTextColor="black"
+                            value={pin}
+                            onChangeText={setPin}
+                            style={styles.input}
+                            keyboardType="numeric"
+                        />
+                        <View style={styles.actions}>
+                            <TouchableOpacity
+                                onPress={() => setOpen(false)}
+                                style={[styles.btn, { backgroundColor: "#ccc" }]}
+                            >
+                                <Text>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSave}
+                                style={[styles.btn, { backgroundColor: "#007AFF" }]}
+                            >
+                                <Text style={{ color: "#fff" }}>Lưu</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-                <Text style={styles.addText}>Thêm thiết bị</Text>
-            </TouchableOpacity>
+                </Modal>
+                <TouchableOpacity style={styles.deviceCard} onPress={() => setOpen(!open)}>
+                    <View style={styles.addIconContainer}>
+                        <Icon name="add" size={30} color={PRIMARY_BLUE} />
+                    </View>
+                    <Text style={styles.addText}>Thêm thiết bị</Text>
+                </TouchableOpacity>
+            </>
         );
     }
     
@@ -74,13 +169,23 @@ const DeviceCard = ({ device, roomId }) => {
             </View>
         </TouchableOpacity>
     );
-}
+});
 
 const RoomScreen = () => {
     const route = useRoute();
     const room: Room = route.params;
     const navigation = useNavigation();
     const { data: devices, isPending } = useGetDevices(room.id as string);
+
+    const sortedDevices = useMemo(() => {
+        if (!devices) return [];
+        return [...devices].sort((a, b) => String(a.id).localeCompare(String(b.id))); 
+    }, [devices]);
+
+    const devicesAndAddButton = useMemo(() => {
+        return [...sortedDevices, { name: "add_button" }];
+    }, [sortedDevices]);
+    
     return (
         <View style={styles.container}>
             {/* Header */}
@@ -105,9 +210,7 @@ const RoomScreen = () => {
                 <View style={styles.roomImageContainer}>
                     <Image
                         source={
-                            room.image 
-                                ? { uri: room.image }
-                                : require('../../assets/livingroom.png')  
+                            require('../../assets/livingroom.png')  
                         }
                         style={styles.roomImage}
                         resizeMode="cover"
@@ -116,8 +219,13 @@ const RoomScreen = () => {
             } 
             <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.deviceGrid}>
-                    {[...(devices || []), { name: "add_button" }]?.map((device, index) => (
-                        <DeviceCard key={device.id || 'add_button'} device={device} roomId={room.id}/>
+                    {isPending && <Text>Đang tải thiết bị...</Text>}
+                    {!isPending && devicesAndAddButton.map((device) => (
+                        <DeviceCard 
+                            key={device.id || 'add_button'} 
+                            device={device} 
+                            roomId={room.id} 
+                        />
                     ))}
                 </View>
             </ScrollView>
@@ -215,6 +323,70 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%'
     },
+    overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.3)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalBox: {
+        backgroundColor: "#fff",
+        borderRadius: 20,
+        padding: 20,
+        width: "80%",
+        elevation: 8,
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 12,
+        textAlign: "center",
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        padding: 10,
+        marginBottom: 20,
+    },
+    actions: {
+        flexDirection: "row",
+        justifyContent: "flex-end",
+        gap: 10,
+    },
+    btn: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 8,
+    },
+    pickerContainer: {
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 14,
+        marginBottom: 6,
+        color: '#333',
+        fontWeight: '600'
+    },
+
+    pickerBox: {
+        borderWidth: 1,
+        borderColor: '#CCCCCC',
+        borderRadius: 10,
+        backgroundColor: '#FAFAFA',
+        overflow: 'hidden',
+        height: 55,
+        justifyContent: 'center',
+        paddingHorizontal: 5,
+    },
+
+    picker: {
+        width: '100%',
+        height: 55,
+        color: '#333',
+        fontSize: 16,
+    },
+
 });
 
 export default RoomScreen;

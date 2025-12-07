@@ -10,6 +10,15 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { House } from "../../types/house";
 import { useAddRoom, useGetRooms } from "../../hooks/useRooms";
 import { AppState } from "react-native";
+import { CompositeNavigationProp, useNavigation } from "@react-navigation/native";
+import { MainTabParamList, RootStackParamList } from "../../navigation/types";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Home'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const HomeScreen = () => {
   // const toggleSwitch = (id) => {
@@ -19,6 +28,7 @@ const HomeScreen = () => {
   //     )
   //   );
   // };
+  const navigation = useNavigation<NavigationProp>();
   const [data, setData] = useState({ temperature: 0, humidity: 0 });
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(null);
@@ -196,6 +206,7 @@ const HomeScreen = () => {
     <View style={{ flex: 1}}>
       <TouchableOpacity
          activeOpacity={0.7}
+         onPress={() => navigation.navigate('Dashboard')}
       >
         <WeatherCard
           city={nameLocation || "Đang xác định vị trí..."}
