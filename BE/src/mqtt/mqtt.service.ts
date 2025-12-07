@@ -27,15 +27,16 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
     }
 
     connectBroker() {
-        const url = "mqtt://192.168.0.101";
+        const url = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
         const options: IClientOptions = {
             clientId: "NestjsMqttClient",
             clean: true,
             reconnectPeriod: 2000,
             connectTimeout: 30_000,
             keepalive: 30,
-            // username: process.env.MQTT_USERNAME,
-            // password: process.env.MQTT_PASSWORD,
+            username: process.env.MQTT_BROKER_USERNAME,
+            password: process.env.MQTT_BROKER_PASSWORD,
+            rejectUnauthorized: false,
         }
 
         this.logger.log(`Connecting to MQTT broker ${url} ...`);
