@@ -5,6 +5,7 @@ WORKDIR /app
 COPY BE/package*.json ./
 
 RUN npm install
+RUN npx prisma generate
 
 # Sửa: Sao chép source code từ BE/ vào /app
 COPY BE/. .
