@@ -12,6 +12,7 @@ import { RoomModule } from './room/room.module';
 import { WebsocketModule } from './websocket/websocket.module';
 import { MqttModule } from './mqtt/mqtt.module';
 import { DeviceModule } from './device/device.module';
+import { InfluxModule } from './influx/influx.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { DeviceModule } from './device/device.module';
     WebsocketModule,
     MqttModule,
     DeviceModule,
+    InfluxModule
   ], 
   controllers: [AppController],
   providers: [AppService, MqttService, WebsocketGateway],

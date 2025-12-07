@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/commo
 import { connect, IClientOptions, IClientPublishOptions, MqttClient } from "mqtt";
 import { WebsocketGateway } from '../websocket/websocket.gateway';
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { InfluxdbService } from "src/influx/influx.service";
 
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy{
@@ -15,7 +16,8 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
 
     constructor(
         private readonly wsGateway: WebsocketGateway,
-        private readonly eventEmitter: EventEmitter2
+        private readonly eventEmitter: EventEmitter2,
+        private readonly influxService: InfluxdbService,
     ) {}
 
     onModuleInit() {
@@ -27,16 +29,16 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
     }
 
     connectBroker() {
-        const url = process.env.MQTT_BROKER_URL || 'mqtt://localhost:1883';
+        const url = 'mqtt://localhost:1883';
         const options: IClientOptions = {
-            clientId: "NestjsMqttClient",
+            clientId: "NestjsMqttClient_" + Math.random().toString(16).slice(2, 10),
             clean: true,
             reconnectPeriod: 2000,
             connectTimeout: 30_000,
             keepalive: 30,
-            username: process.env.MQTT_BROKER_USERNAME,
-            password: process.env.MQTT_BROKER_PASSWORD,
-            rejectUnauthorized: false,
+            // username: process.env.MQTT_BROKER_USERNAME,
+            // password: process.env.MQTT_BROKER_PASSWORD,
+            //rejectUnauthorized: false,
         }
 
         this.logger.log(`Connecting to MQTT broker ${url} ...`);
@@ -70,7 +72,6 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
             this.logger.debug(`Received message on ${topic}: ${payloadStr}`);
             
             if(topic.includes('/state')) {
-                console.log("Trong mqtt service ");
                 this.eventEmitter.emit("device.state.changed", {
                     topic,
                     payload: parsed,
@@ -81,7 +82,13 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
             // bat websocket
             try {
                 // tùy nhu cầu: emit cả topic, raw payload, timestamp...
-                this.wsGateway.sendSensorData({ topic, payload: parsed, receivedAt: new Date().toISOString() });
+                if(topic.includes('dht11/data')) {
+                    this.wsGateway.sendSensorData({ topic, payload: parsed, receivedAt: new Date().toISOString() });
+                    const roomId = topic.split('/')[2]; 
+                    const temp = parsed.temperature;
+                    const humidity = parsed.humidity;
+                    this.influxService.writeSensorData(roomId, temp, humidity);
+                }
             } catch (e) {
                 this.logger.error('Failed to emit websocket event: ' + (e as Error).message);
             }
