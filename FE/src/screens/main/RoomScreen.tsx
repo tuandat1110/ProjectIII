@@ -11,6 +11,8 @@ import socket from '../../socket/socket';
 import { useQueryClient } from '@tanstack/react-query';
 import { roomKeys } from '../../queryKeys';
 import { Picker } from '@react-native-picker/picker';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import HeaderV2 from '../../components/Header-V2';
 
 const { width } = Dimensions.get('window');
 
@@ -159,10 +161,28 @@ const DeviceCard = memo(({ device, roomId }) => {
     
     return (
         <TouchableOpacity style={styles.deviceCard} onPress={handleToggle}>
+            {device.type === "light" && (
             <Icon name="bulb-outline" size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
-            <TouchableOpacity style={styles.powerButton}>
+            )}
+
+            {device.type === "fan" && (
+            <MaterialCommunityIcons name="fan" size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
+            )}
+
+            {device.type === "ac" && (
+            <Icon name="snow-outline" size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
+            )}
+
+            {device.type === "tv" && (
+            <Icon name="tv-outline" size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
+            )}
+
+            {device.type === "door" && (
+            <Icon name="home-outline" size={30} color={TEXT_DARK} style={{ marginBottom: 5 }} />
+            )}
+            <View style={styles.powerButton}>
                 <Icon name="power" size={18} color={device.status ? ACCENT_ORANGE : '#CCCCCC'} />
-            </TouchableOpacity>
+            </View>
             <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>{device.name}</Text>
                 <Text style={styles.cardSubtitle}>{device.status}</Text>
@@ -172,10 +192,10 @@ const DeviceCard = memo(({ device, roomId }) => {
 });
 
 const RoomScreen = () => {
-    const route = useRoute();
-    const room: Room = route.params;
-    const navigation = useNavigation();
-    const { data: devices, isPending } = useGetDevices(room.id as string);
+const route = useRoute();
+const room: Room = route.params;
+const navigation = useNavigation() as any;
+const { data: devices, isPending } = useGetDevices(room.id as string);
 
     const sortedDevices = useMemo(() => {
         if (!devices) return [];
@@ -189,15 +209,7 @@ const RoomScreen = () => {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-back" size={24} color={PRIMARY_BLUE} />
-                </TouchableOpacity>
-                <Text style={styles.roomTitle}>{room.name}</Text>
-                <TouchableOpacity>
-                    <Icon name="ellipsis-vertical" size={24} color={PRIMARY_BLUE} />
-                </TouchableOpacity>
-            </View>   
+            <HeaderV2 title={room.name} navigation={navigation}/>  
             {room.image ? (
                 <View style={styles.roomImageContainer}>
                     <Image
@@ -239,18 +251,6 @@ const styles = StyleSheet.create({
         backgroundColor: BACKGROUND_LIGHT, 
         paddingHorizontal: 15,
         paddingTop: 10
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 10,
-        marginBottom: 10,
-    },
-    roomTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: PRIMARY_BLUE,
     },
     // --- Device Grid ---
     deviceGrid: {

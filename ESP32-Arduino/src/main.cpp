@@ -34,12 +34,13 @@
   const char *password = "11102004";
 
   // MQTT broker
-  const char *mqtt_server = "290a5491b2bd4ac1aae8fa40f2fcd698.s1.eu.hivemq.cloud";
-  const int mqtt_port = 8883;
+  //"290a5491b2bd4ac1aae8fa40f2fcd698.s1.eu.hivemq.cloud"
+  const char *mqtt_server = "192.168.0.100";
+  const int mqtt_port = 1883;
   const char *mqtt_user = "tuandat1110";
   const char *mqtt_password = "Dat11102004";
 
-  WiFiClientSecure espClient; 
+  WiFiClient espClient;
   PubSubClient client(espClient);
 
   // Task handle
@@ -80,7 +81,7 @@
   unsigned long lastReconnectAttempt = 0;
 
   bool mqttReconnect() {
-    if (client.connect("ESP32Client",mqtt_user,mqtt_password)) {
+    if (client.connect("ESP32Client")) {
       client.subscribe(subscribeCommandTopic.c_str(), 1);
       Serial.println("MQTT reconnect OK!");
       return true;
@@ -153,7 +154,7 @@
   void reconnectMQTT() {
     while (!client.connected()) {
       Serial.print("Đang kết nối MQTT...");
-      if (client.connect("ESP32Client",mqtt_user,mqtt_password)) {
+      if (client.connect("ESP32Client")) {
         Serial.println("thành công!");
         client.subscribe(subscribeCommandTopic.c_str());  // Đăng ký lắng nghe lệnh bật/tắt đèn
         Serial.print("Đã subscribe topic: ");
@@ -250,7 +251,7 @@
     display.display();
     dht.begin();
     setUpWiFi();
-    espClient.setInsecure(); // Bỏ qua xác thực SSL (chỉ dùng cho mục đích thử nghiệm)
+    //espClient.setInsecure(); // Bỏ qua xác thực SSL (chỉ dùng cho mục đích thử nghiệm)
     client.setServer(mqtt_server, mqtt_port);
     client.setCallback(callback);
 

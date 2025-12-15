@@ -2,6 +2,13 @@
 import { Injectable } from '@nestjs/common';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 
+interface InfluxRow {
+  _time: string;
+  _field: string;
+  _value: number;
+  [key: string]: any;
+}
+
 // Cấu hình InfluxDB
 const token = 'Nj1FwSpe-M78EI8sfx6lat5FeUiMB_od3GAgEPnvnCiAs-Vnfzzzc8sWyH2jDzhNQ-SeazWmQd_g8lg361xXLw=='; 
 const org = 'iot-org';
@@ -37,41 +44,34 @@ export class InfluxdbService {
             console.error('Lỗi khi ghi vào InfluxDB:', error);
         }
     }
+    // tam thoi bo deviceId
+     async getSensorHistory(durationMinutes: number, aggregateSeconds: number) {
+      const fluxQuery = `
+        from(bucket: "${bucket}")
+          |> range(start: -${durationMinutes}m)
+          |> filter(fn: (r) => r._measurement == "sensor_data")
+          |> filter(fn: (r) => r._field == "temperature" or r._field == "humidity")
+          |> aggregateWindow(every: ${aggregateSeconds}s, fn: mean)
+          |> yield()
+      `;
 
-    async getSensorHistory(roomId: string, minutes = 60) {
-    const queryApi = this.influxDB.getQueryApi(org);
-    const query = `
-      from(bucket: "${bucket}")
-        |> range(start: -${minutes}m)
-        |> filter(fn: (r) => r._measurement == "sensor_data")
-        |> filter(fn: (r) => r.room_id == "${roomId}")
-        |> filter(fn: (r) => r._field == "temperature" or r._field == "humidity")
-        |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
-        |> yield(name: "mean")
-    `;
+      const queryApi = this.influxDB.getQueryApi(org);
+      const rows = await queryApi.collectRows(fluxQuery);
+      console.log(`Rows: ${JSON.stringify(rows)}`);
 
-    const data: Array<{ time: any; field: any; value: any }> = [];
+      //  group các dòng theo _time
+      const grouped: Record<string, any> = {};
 
-    return new Promise((resolve, reject) => {
-      queryApi.queryRows(query, {
-        next(row, tableMeta) {
-          const o = tableMeta.toObject(row);
-          data.push({
-            time: o._time,
-            field: o._field,
-            value: o._value,
-          });
-        },
-        error(err) {
-          reject(err);
-        },
-        complete() {
-          // Gom nhóm lại theo field
-          const temperature = data.filter((d) => d.field === 'temperature');
-          const humidity = data.filter((d) => d.field === 'humidity');
-          resolve({ temperature, humidity });
-        },
+      rows.forEach((row: InfluxRow) => {
+        const time = row._time;
+        const field = row._field;
+        const value = row._value;
+
+        if (!grouped[time]) grouped[time] = { time };
+        grouped[time][field] = value;
       });
-    });
-  }
+
+      // chuyển object → array
+      return Object.values(grouped);
+    }
 }
