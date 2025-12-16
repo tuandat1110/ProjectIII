@@ -1,10 +1,11 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { DeviceService } from "./device.service";
 import { DeviceDto } from "./dto/device.dto";
-import { ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { WebsocketGateway } from "src/websocket/websocket.gateway";
 import { MqttService } from "src/mqtt/mqtt.service";
 import { ControlDeviceDto } from "./dto/controlDevice.dto";
+import { AuthGuard } from "@nestjs/passport";
 
 @Controller('devices')
 export class DeviceController {
@@ -14,11 +15,15 @@ export class DeviceController {
         private readonly mqtt: MqttService
     ){}
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Get()
     async getAllDevices(): Promise<DeviceDto[]> {
         return await this.deviceService.getAllDevices();
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Create device' })
     @ApiResponse({ status: 200, description: 'Create device successfully.'})
     @ApiBody({ type: DeviceDto})
@@ -27,6 +32,8 @@ export class DeviceController {
         return await this.deviceService.createDevice(body);
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @ApiOperation({ summary: 'Update device' })
     @ApiResponse({ status: 200, description: 'Update device successfully.'})
     @ApiBody({ type: DeviceDto})
@@ -35,6 +42,8 @@ export class DeviceController {
         return await this.deviceService.updateDevice(id,body);
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Patch('/:deviceId/command')
     @HttpCode(202)
     sendCommand(
