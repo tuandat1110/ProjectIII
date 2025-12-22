@@ -14,5 +14,8 @@ export const deviceApi = {
     controlDevice: async (devideId: string | number, data: any) => {
         console.log(`/devices/${devideId}/command`);
         return axiosClient.patch(`/devices/${devideId}/command`, JSON.stringify(data));
+    },
+    getHistoryData: async (durationMinutes: number,aggregateSeconds: number) => {
+        return axiosClient.get(`/influx/history?durationMinutes=${durationMinutes}&aggregateSeconds=${aggregateSeconds}`);
     }
 }

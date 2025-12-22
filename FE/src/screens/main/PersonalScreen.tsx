@@ -49,7 +49,7 @@ const PersonalScreen = () => {
     return (
         <View style={styles.container}>
             <View>
-                <PersonalCard name={userName?.name} />
+                <PersonalCard name={userName?.name} avatarUrl={userName?.avatarUrl} />
                 <View style={styles.settingsContainer}>
                     {settingsItems.map((item) => (
                         <TouchableOpacity

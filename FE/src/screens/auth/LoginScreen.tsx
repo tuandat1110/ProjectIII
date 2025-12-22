@@ -9,14 +9,11 @@ import {
   Image,
   Alert,
 } from "react-native";
-// import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import Entypo from "react-native-vector-icons/Entypo";
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from "react-native-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Fontisto from 'react-native-vector-icons/Fontisto';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../store/authSlice";
 import authApi from "../../api/authApi";
@@ -32,38 +29,17 @@ const LoginScreen = () => {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    // 1. Thêm state để quản lý việc hiển thị mật khẩu
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-    // const handleLogin = async () => {
-    //   try {
-    //     console.log("Attempting login with:", { email, password });
-    //     const res = await fetch("http://192.168.0.102:3000/auth/login", {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify({ email, password }),
-    //     });
-    //     const data = await res.json();
-
-    //     console.log("Login response:", data);
-
-    //     if (res.ok) {
-    //       dispatch(loginSuccess({ token: data.token, user: data.user }));
-    //     } else {
-    //       Alert.alert("Đăng nhập thất bại", data.message);
-    //     }
-    //   } catch (err) {
-    //     Alert.alert("Lỗi kết nối", err.message);
-    //   }
-    // };
     const handleLogin = async () => {
       try {
         console.log("Attempting login with:", { email, password });
         const res = await authApi.login(email, password);
-        //console.log("Login response:", res);
-
-        // res ở đây là res.data từ interceptor
+        console.log(`data: ${JSON.stringify(res.data.user)}`);
+        
         if (res.data.access_token) {
           dispatch(loginSuccess({ token: res.data.access_token, user: res.data.user }));
-          //console.log("Token saved to store:", res.data.access_token);
           Toast.show({
             type: 'success',           
             text1: 'Đăng nhập thành công',
@@ -96,52 +72,63 @@ const LoginScreen = () => {
             <Text style={styles.title}>Đăng nhập</Text>
 
             <View style={styles.inputContainer}>
-            <Icon name="email-outline" size={22} color="#4facfe" style={styles.inputIcon} />
-            {/* <Icon name="rocket" size={30} color="#900" /> */}
-            {/* <Fontisto name="email" color="#4facfe" size={24} /> */}
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-            />
+              <Icon name="email-outline" size={22} color="#4facfe" style={styles.inputIcon} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+              />
             </View>
 
+            {/* Input Mật khẩu có nút con mắt */}
             <View style={styles.inputContainer}>
-            <Icon name="lock-outline" size={22} color="#4facfe" style={styles.inputIcon} />
-            <TextInput
-                style={styles.input}
-                placeholder="Mật khẩu"
-                value={password}
-                onChangeText={setPassword}
-                placeholderTextColor="#999"
-                secureTextEntry
-            />
+              <Icon name="lock-outline" size={22} color="#4facfe" style={styles.inputIcon} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="Mật khẩu"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholderTextColor="#999"
+                  // 2. secureTextEntry phụ thuộc vào state isPasswordVisible
+                  secureTextEntry={!isPasswordVisible}
+              />
+              {/* 3. Nút bấm để đảo ngược trạng thái hiển thị */}
+              <TouchableOpacity 
+                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                style={styles.eyeIcon}
+              >
+                <Icon 
+                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
+                  size={22} 
+                  color="#4facfe" 
+                />
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.forgotButton} activeOpacity={0.7}>
-            <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+              <Text style={styles.forgotText}>Quên mật khẩu?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.loginButton} activeOpacity={0.85}>
-            <LinearGradient
-                colors={["#4facfe", "#00f2fe"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.loginGradient}
-            >
-                <Icon name="login" size={22} color="#fff" style={{ marginRight: 6 }} />
-                <Text style={styles.loginText} onPress={handleLogin}>Đăng nhập</Text>
-            </LinearGradient>
+            <TouchableOpacity style={styles.loginButton} activeOpacity={0.85} onPress={handleLogin}>
+              <LinearGradient
+                  colors={["#4facfe", "#00f2fe"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.loginGradient}
+              >
+                  <Icon name="login" size={22} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.loginText}>Đăng nhập</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Chưa có tài khoản? </Text>
-            <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.signupLink}>Đăng ký ngay</Text>
-            </TouchableOpacity>
+              <Text style={styles.signupText}>Chưa có tài khoản? </Text>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('Signup')}>
+                  <Text style={styles.signupLink}>Đăng ký ngay</Text>
+              </TouchableOpacity>
             </View>
         </View>
         </LinearGradient>
@@ -198,6 +185,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#333",
+  },
+  eyeIcon: {
+    padding: 4,
   },
   forgotButton: {
     alignSelf: "flex-end",

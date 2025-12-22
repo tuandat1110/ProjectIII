@@ -3,7 +3,7 @@ import axios from 'axios';
 import { store } from '../store/store';
  
 const axiosClient = axios.create({
-    baseURL: "http://192.168.0.100:3000",
+    baseURL: "http://192.168.0.102:3000",
     headers: {
         'Content-Type': 'application/json',
     },

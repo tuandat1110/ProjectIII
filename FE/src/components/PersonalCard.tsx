@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 interface IPersonal {
     name: string | undefined
+    avatarUrl: string | undefined
 }
 
 type NavigationProp = CompositeNavigationProp<
@@ -15,12 +16,19 @@ type NavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
-const PersonalCard = ({ name }: IPersonal) => {
+const PersonalCard = ({ name, avatarUrl }: IPersonal) => {
     const navigtation = useNavigation<NavigationProp>();
     return (
         <TouchableOpacity style={styles.container} activeOpacity={0.8} onPress={() => navigtation.navigate('ProfileDetail')}>
           <View style={styles.userInfo}>
-              <Image source={require("../assets/user.png")} style={styles.avatar} />
+              {avatarUrl ? (
+                <Image 
+                  source={{ uri: avatarUrl }} 
+                  style={styles.avatar} 
+                />
+              ) : 
+                (<Image source={require("../assets/user.png")} style={styles.avatar} />)
+              }
               <Text style={styles.userName}>{name}</Text>
           </View>
           <Icon name="chevron-forward" size={22} color="#4e89c7" />

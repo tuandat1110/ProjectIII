@@ -14,6 +14,7 @@ import { CompositeNavigationProp, useNavigation } from "@react-navigation/native
 import { MainTabParamList, RootStackParamList } from "../../navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import Toast from "react-native-toast-message";
 
 type NavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Home'>,
@@ -74,6 +75,12 @@ const HomeScreen = () => {
             console.error("LỖI API:", err);
             // Hiển thị thông báo lỗi cho người dùng
         }
+    })
+    Toast.show({
+        type: 'success',
+        text1: 'Thêm phònng thành công',
+        position: 'bottom',
+        visibilityTime: 1000,
     })
     setOpen(false);
   }

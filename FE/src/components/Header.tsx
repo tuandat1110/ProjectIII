@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useAddHouse, useGetHouses } from '../hooks/useHouses';
 import { House } from "../types/house";
 import { selectHome, setHomeInfo } from "../store/houseSlice";
+import Toast from "react-native-toast-message";
 
 
 interface IHeader {
@@ -41,8 +42,13 @@ const Header = ( {title, nameIcon}: IHeader) => {
                 setDescription("");
             }
         })
+        Toast.show({
+            type: 'success',
+            text1: 'Thêm nhà thành công',
+            position: 'bottom',
+            visibilityTime: 1000,
+        })
     };
-
     const handleSelect = (home: House) => {
         dispatch(setHomeInfo({ id: home.id, mac: home.home_id }));
         setVisible(false);
