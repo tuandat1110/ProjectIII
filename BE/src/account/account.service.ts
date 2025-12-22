@@ -45,4 +45,10 @@ export class AccountService {
         });
     }
     
+    async updateAvatar(userId: number, avatarUrl: string | undefined) {
+        return await this.prisma.account.update({
+            where: { id: userId },
+            data: { avatarUrl },
+        });
+    }
 }

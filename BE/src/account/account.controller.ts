@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { UpdateAvatarDto } from './dto/update-avatar-dto';
 
 @Controller('accounts')
 export class AccountController {
@@ -21,6 +22,11 @@ export class AccountController {
     @Put(':id')
     async updateAccount(@Param('id') id: number, @Body() updateAccountDto: CreateAccountDto) {
         return this.accountService.updateAccount(Number(id), updateAccountDto);
+    }
+
+    @Patch(':id')
+    async updateAvatar(@Param('id') id: number, @Body() avatar: UpdateAvatarDto) {
+        return this.accountService.updateAvatar(Number(id), avatar?.avatarUrl);
     }
 
     @Delete(':id')

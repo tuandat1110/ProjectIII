@@ -32,6 +32,13 @@ export class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role,
+                avatarUrl: user?.avatarUrl,
+                phone: user?.phone,
+                address: user?.address,
+                gender: user?.gender,
+                dateOfBirth: user?.dateOfBirth,
+                createdAt: user?.createdAt,
+                updatedAt: user?.updatedAt
             },
         }
     }

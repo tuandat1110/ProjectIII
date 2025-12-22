@@ -57,7 +57,7 @@ export class InfluxdbService {
 
       const queryApi = this.influxDB.getQueryApi(org);
       const rows = await queryApi.collectRows(fluxQuery);
-      console.log(`Rows: ${JSON.stringify(rows)}`);
+      //console.log(`Rows: ${JSON.stringify(rows)}`);
 
       //  group các dòng theo _time
       const grouped: Record<string, any> = {};

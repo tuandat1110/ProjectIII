@@ -13,6 +13,7 @@ import { WebsocketModule } from './websocket/websocket.module';
 import { MqttModule } from './mqtt/mqtt.module';
 import { DeviceModule } from './device/device.module';
 import { InfluxModule } from './influx/influx.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { InfluxModule } from './influx/influx.module';
     WebsocketModule,
     MqttModule,
     DeviceModule,
-    InfluxModule
+    InfluxModule,
+    UploadModule
   ], 
   controllers: [AppController],
   providers: [AppService, MqttService, WebsocketGateway],

@@ -19,15 +19,30 @@ enum Role {
   ADMIN
 }
 
-model Account {
-  id             Int             @id @default(autoincrement())
-  name           String
-  email          String          @unique
-  password       String
-  createdAt      DateTime        @default(now())
-  role           Role            @default(USER)
-  houses         House[]
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
 }
+model Account {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  password    String
+
+  avatarUrl   String?      // URL hoặc path avatar
+  phone       String?      @unique
+  address     String?
+  gender      Gender?
+  dateOfBirth DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  role        Role     @default(USER)
+  houses      House[]
+}
+
 
 model House {
   id          Int     @id @default(autoincrement())
