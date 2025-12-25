@@ -16,6 +16,7 @@ DisplayService ui(display);
 QueueHandle_t ledQueue;
 String subscribeCommandTopic;
 unsigned long lastReconnectAttempt = 0;
+String sensorPublishTopic;
 
 // Hàm callback giữ nguyên logic copy an toàn
 void callback(char *topic, byte *message, unsigned int length) {
@@ -76,6 +77,8 @@ void TaskReadDHT11(void *pvParameters) {
             if (mqtt.isConnected()) {
                 mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
                 Serial.println("Đã gửi MQTT: " + payload);
+                mqtt.publish(sensorPublishTopic.c_str(), payload.c_str());
+                Serial.println("Đã gửi MQTT tới [" + sensorPublishTopic + "]: " + payload);
             } else {
                 Serial.println("TaskReadDHT11: MQTT Disconnected, cannot publish.");
             }
@@ -103,30 +106,29 @@ void TaskMQTT(void *pvParameters) {
 
 void setup() {
     Serial.begin(115200);
-    
-    // 1. Khởi tạo Hardware
+
     pinMode(LED_PIN, OUTPUT);
     pinMode(4, OUTPUT);
     digitalWrite(4, HIGH);
     digitalWrite(LED_PIN, HIGH);
+    pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
     ledQueue = xQueueCreate(30, sizeof(LedCommand));
 
-    // 2. Màn hình
     ui.init(); 
     ui.showSystemInfo("WIFI CONNECTING...");
 
-    // 3. Kết nối WiFi (Nếu chưa có hoặc sai, nó sẽ tự động phát AP tại đây)
     wifi.connect(); 
 
-    // 4. Chỉ khi WiFi đã thông suốt thì mới khởi động MQTT và các Task
     if (wifi.isConnected()) {
+        String hId = wifi.getHomeId(); 
+        String rId = wifi.getRoomId();
         uint64_t chipid = ESP.getEfuseMac();
         char chipStr[32];
         snprintf(chipStr, sizeof(chipStr), "%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
         
         String CONTROLLER_ID = String((uint32_t)(chipid >> 32), HEX) + String((uint32_t)chipid, HEX);
         subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/cmd";
-
+        sensorPublishTopic = "home/" + hId + "/" + rId + "/dht11/data";
         ui.showSystemInfo(chipStr);
         
         mqtt.init(mqtt_server, mqtt_port, callback);
@@ -139,7 +141,19 @@ void setup() {
 }
 
 void loop() {
-    // Luôn xử lý WebServer nếu đang trong Config Mode
+    if (digitalRead(RESET_BUTTON_PIN) == LOW) { 
+        unsigned long startTime = millis();
+        while (digitalRead(RESET_BUTTON_PIN) == LOW) {
+            if (millis() - startTime > RESET_HOLD_TIME) {
+                Serial.println("Đang xóa cấu hình và khởi động lại...");
+                ui.showSystemInfo("RESETING...");
+                wifi.resetSettings(); 
+                delay(1000);
+                ESP.restart(); 
+            }
+            delay(10);
+        }
+    }
     wifi.loopConfig();
-    delay(1);
+    delay(10);
 }

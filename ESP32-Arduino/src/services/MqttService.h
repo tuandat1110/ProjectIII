@@ -12,7 +12,6 @@ private:
 
     const char* _server;
     int port;
-    String _subcribeTopic;
 public:
     //constructor
     MqttService();
