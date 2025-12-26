@@ -18,19 +18,45 @@ String subscribeCommandTopic;
 unsigned long lastReconnectAttempt = 0;
 String sensorPublishTopic;
 
-// Hàm callback giữ nguyên logic copy an toàn
 void callback(char *topic, byte *message, unsigned int length) {
-    LedCommand cmd;
-    strncpy(cmd.topic, topic, sizeof(cmd.topic) - 1);
-    cmd.topic[sizeof(cmd.topic) - 1] = '\0';
-    unsigned int payload_len = (length < sizeof(cmd.payload)) ? length : (sizeof(cmd.payload) - 1);
-    memcpy(cmd.payload, message, payload_len);
-    cmd.payload[payload_len] = '\0';
+    char topicCopy[128];
+    strncpy(topicCopy, topic, sizeof(topicCopy) - 1);
+    topicCopy[sizeof(topicCopy) - 1] = '\0';
 
-    if (xQueueSend(ledQueue, &cmd, 0) != pdTRUE) {
-        Serial.println("Queue đầy, không gửi được lệnh!");
-    } else {
-        Serial.printf("Đã nhận lệnh [%s]: %s\n", cmd.topic, cmd.payload);
+    char *parts[5];
+    int count = 0;
+    char *token = strtok(topicCopy, "/");
+    while (token != NULL && count < 5) {
+        parts[count++] = token;
+        token = strtok(NULL, "/");
+    }
+
+    for(int i=0;i<5;i++) {
+        Serial.printf("parts[%d]: %s\n", i, parts[i] ? parts[i] : "NULL");
+    }
+
+    if (count >= 3) {
+        String recHId = String(parts[2]);
+        String recRId = String(parts[3]);
+        Serial.println("recHId: " + recHId + ", recRId: " + recRId);
+
+        if (recHId == wifi.getHomeId() && recRId == wifi.getRoomId()) {
+            LedCommand cmd;
+            strncpy(cmd.topic, topic, sizeof(cmd.topic) - 1);
+            cmd.topic[sizeof(cmd.topic) - 1] = '\0';
+
+            unsigned int payload_len = (length < sizeof(cmd.payload)) ? length : (sizeof(cmd.payload) - 1);
+            memcpy(cmd.payload, message, payload_len);
+            cmd.payload[payload_len] = '\0';
+
+            if (xQueueSend(ledQueue, &cmd, 0) != pdTRUE) {
+                Serial.println("Queue đầy, không gửi được lệnh!");
+            } else {
+                Serial.printf("Đã nhận lệnh [%s]: %s\n", cmd.topic, cmd.payload);
+            }
+        } else {
+            Serial.println("ID không khớp, bỏ qua lệnh.");
+        }
     }
 }
 
@@ -41,6 +67,7 @@ void TaskLedControl(void *pvParameters) {
     for (;;) {
         if (xQueueReceive(ledQueue, &cmd, portMAX_DELAY) == pdTRUE) {
             int pin; char status[8];
+            Serial.printf("Xử lý lệnh cho topic [%s] với payload [%s]\n", cmd.topic, cmd.payload);
             if (sscanf(cmd.payload, "%d:%7s", &pin, status) == 2) {
                 int command = (strcasecmp(status, "ON") == 0) ? LOW : HIGH;
                 digitalWrite(pin, command);
@@ -58,6 +85,7 @@ void TaskLedControl(void *pvParameters) {
                 char feedback[16];
                 snprintf(feedback, sizeof(feedback), "%d:%s", pin, (command == HIGH ? "OFF" : "ON"));
                 mqtt.publish(stateTopicBuffer, feedback, true);
+                Serial.printf("Đã gửi phản hồi tới [%s]: %s\n", stateTopicBuffer, feedback);
             } else {
                 Serial.println("Payload không hợp lệ!");
             }
@@ -75,8 +103,8 @@ void TaskReadDHT11(void *pvParameters) {
             Serial.printf(" Nhiệt độ: %.1f°C,  Độ ẩm: %.1f%%\n", data.temperature, data.humidity);
             String payload = "{\"temperature\":" + String(data.temperature, 1) + ",\"humidity\":" + String(data.humidity, 1) + "}";
             if (mqtt.isConnected()) {
-                mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
-                Serial.println("Đã gửi MQTT: " + payload);
+                // mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
+                // Serial.println("Đã gửi MQTT: " + payload);
                 mqtt.publish(sensorPublishTopic.c_str(), payload.c_str());
                 Serial.println("Đã gửi MQTT tới [" + sensorPublishTopic + "]: " + payload);
             } else {
@@ -120,12 +148,11 @@ void setup() {
     wifi.connect(); 
 
     if (wifi.isConnected()) {
-        String hId = wifi.getHomeId(); 
-        String rId = wifi.getRoomId();
         uint64_t chipid = ESP.getEfuseMac();
         char chipStr[32];
         snprintf(chipStr, sizeof(chipStr), "%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
-        
+        String hId = wifi.getHomeId(); 
+        String rId = wifi.getRoomId();
         String CONTROLLER_ID = String((uint32_t)(chipid >> 32), HEX) + String((uint32_t)chipid, HEX);
         subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/cmd";
         sensorPublishTopic = "home/" + hId + "/" + rId + "/dht11/data";

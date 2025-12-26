@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { DeviceService } from "./device.service";
 import { DeviceDto } from "./dto/device.dto";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
@@ -44,6 +44,15 @@ export class DeviceController {
 
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
+    @ApiOperation({ summary: 'Delete device' })
+    @ApiResponse({ status: 200, description: 'Delete device successfully.'})
+    @Delete("/:id")
+    async deleteDevice(@Param('id') id: number): Promise<DeviceDto> {
+        return await this.deviceService.deleteDevice(id);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Patch('/:deviceId/command')
     @HttpCode(202)
     sendCommand(
@@ -51,8 +60,8 @@ export class DeviceController {
         @Body() body: ControlDeviceDto
     ) {
         console.log("hihihihihihi");
-        // topic chuẩn: home/{mac}/{roomId}/{deviceId}/cmd
-        const topic = `home/${body.mac}/${body.roomId}/${deviceId}/cmd`;
+        // topic chuẩn: home/{mac}/{houseId}/{roomId}/cmd
+        const topic = `home/${body.mac}/${body.houseId}/${body.roomId}/cmd`;
         // payload gửi lên ESP32
         const payload = `${body.pin}:${body.status}`;
         this.mqtt.publish(topic, payload, { qos: 1, retain: false });

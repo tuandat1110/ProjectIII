@@ -34,10 +34,16 @@ export class DeviceService {
         })
     }
 
+    async deleteDevice(id: number): Promise<any> {
+        return await this.prisma.device.delete({
+            where: { id: id }
+        });
+    }
+
     @OnEvent('device.state.changed')
     async handleDeviceState(event: { topic: string; payload: string }) {
         const { topic, payload } = event;
-        // topic: home/{mac}/{roomId}/{deviceId}/state
+        // topic: home/{mac}/{homeId}/{roomId}/state
         const parts = topic.split('/');
         const deviceId = Number(parts[3]);
         const [pinStr, statusStr] = payload.split(':');

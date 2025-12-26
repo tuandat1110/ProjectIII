@@ -14,4 +14,7 @@ export class ControlDeviceDto {
 
     @IsNotEmpty()
     status: boolean;
+
+    @IsNotEmpty()
+    houseId: string;
 }

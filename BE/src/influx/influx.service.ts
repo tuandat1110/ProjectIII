@@ -26,10 +26,10 @@ export class InfluxdbService {
         this.writeApi = this.influxDB.getWriteApi(org, bucket, 'ns'); // 'ns' là precision (nanoseconds)
     }
 
-    async writeSensorData(roomId: string, temp: number, humidity: number): Promise<void> {
+    async writeSensorData(homeId: string, temp: number, humidity: number): Promise<void> {
         // Tạo một Point (Điểm dữ liệu)
         const point = new Point('sensor_data')
-            .tag('room_id', roomId) // Tag: Dùng để lọc và nhóm (indexing)
+            .tag('home_id', homeId) // Tag: Dùng để lọc và nhóm (indexing)
             .tag('type', 'T&H')
             .floatField('temperature', temp) // Field: Giá trị đo lường
             .floatField('humidity', humidity)
@@ -39,17 +39,18 @@ export class InfluxdbService {
         
         try {
             await this.writeApi.flush(); // Bắt buộc flush để đảm bảo dữ liệu được gửi đi
-            console.log(`Dữ liệu cảm biến đã được ghi cho Room: ${roomId}`);
+            console.log(`Dữ liệu cảm biến đã được ghi cho Home: ${homeId}`);
         } catch (error) {
             console.error('Lỗi khi ghi vào InfluxDB:', error);
         }
     }
     // tam thoi bo deviceId
-     async getSensorHistory(durationMinutes: number, aggregateSeconds: number) {
+     async getSensorHistory(durationMinutes: number, aggregateSeconds: number, homeId: string): Promise<any[]> {
       const fluxQuery = `
         from(bucket: "${bucket}")
           |> range(start: -${durationMinutes}m)
           |> filter(fn: (r) => r._measurement == "sensor_data")
+          |> filter(fn: (r) => r.home_id == "${homeId}")
           |> filter(fn: (r) => r._field == "temperature" or r._field == "humidity")
           |> aggregateWindow(every: ${aggregateSeconds}s, fn: mean)
           |> yield()

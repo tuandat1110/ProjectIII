@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateAvatarDto } from './dto/update-avatar-dto';
 
@@ -19,11 +19,15 @@ export class AccountController {
     async createAccount(@Body() createAccountDto: CreateAccountDto) {
         return this.accountService.createAccount(createAccountDto);
     }
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Put(':id')
     async updateAccount(@Param('id') id: number, @Body() updateAccountDto: CreateAccountDto) {
         return this.accountService.updateAccount(Number(id), updateAccountDto);
     }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Patch(':id')
     async updateAvatar(@Param('id') id: number, @Body() avatar: UpdateAvatarDto) {
         return this.accountService.updateAvatar(Number(id), avatar?.avatarUrl);

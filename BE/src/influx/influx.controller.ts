@@ -12,8 +12,9 @@ export class InfluxdbController {
   @Get('history')
   async getHistory(
     @Query('durationMinutes') durationMinutes: number, 
-    @Query('aggregateSeconds') aggregateSeconds: number
+    @Query('aggregateSeconds') aggregateSeconds: number,
+    @Query('homeId') homeId: string
   ) {
-    return this.influxService.getSensorHistory(durationMinutes,aggregateSeconds);
+    return this.influxService.getSensorHistory(durationMinutes,aggregateSeconds,homeId);
   }
 }

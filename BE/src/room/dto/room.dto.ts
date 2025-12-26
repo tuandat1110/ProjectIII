@@ -14,7 +14,7 @@ export class RoomDto {
 
     @ApiProperty({ example: 1, description: "House ID"})
     @IsNotEmpty()
-    houseId: number;
+    houseId: string;
 
     @IsOptional()
     image: string | null;

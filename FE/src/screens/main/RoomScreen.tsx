@@ -13,6 +13,7 @@ import { roomKeys } from '../../queryKeys';
 import { Picker } from '@react-native-picker/picker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import HeaderV2 from '../../components/Header-V2';
+import { uuidToBase62 } from '../../utils/utils';
 
 const { width } = Dimensions.get('window');
 
@@ -30,18 +31,20 @@ const TYPE_DATA = [
     { label: 'Cửa cuốn', value: 'door' },
 ]
 
-const DeviceCard = memo(({ device, roomId }) => {
+const DeviceCard = memo(({ device, roomId }: any) => {
     const controlDevice = useControlDevice();
     const queryClient = useQueryClient();
-    const mac = useSelector((state: RootState) => state.house.macAddress); 
+    //const mac = useSelector((state: RootState) => state.house.macAddress); 
     const [open, setOpen] = React.useState(false);
+    const [mac, setMac] = React.useState('');
     const [deviceName, setDeviceName] = React.useState('');
     const [pin, setPin] = React.useState('');
     const [selectedRoom, setSelectedRoom] = React.useState(TYPE_DATA[0].value);
     const { mutate, isPending } = useAddDevice(roomId);
+    const homeId = useSelector((state: RootState) => state.house.selectedHomeId);
 
     useEffect(() => {
-        const handleDeviceUpdate = (payload) => {
+        const handleDeviceUpdate = (payload: any) => {
             const { deviceId, pin, status, updatedAt } = payload;
             if(deviceId && pin) {
                 queryClient.invalidateQueries({ queryKey: roomKeys.devices(roomId) });
@@ -61,8 +64,9 @@ const DeviceCard = memo(({ device, roomId }) => {
             status: device.status === true ? "OFF" : "ON",
             deviceId: device.id,
             pin: device.pin,
-            mac: mac,
-            roomId: String(roomId)
+            mac: device.macAddress,
+            roomId: uuidToBase62(String(roomId)),
+            homeId: uuidToBase62(String(homeId))
         };
         console.log(`Payload: ${JSON.stringify(payload)}`);
         controlDevice.mutate(payload);
@@ -72,10 +76,11 @@ const DeviceCard = memo(({ device, roomId }) => {
         if(!deviceName.trim() || !pin.trim()) {
             return;
         }
-        mutate({ name: deviceName, pin, type: selectedRoom, status: false, ipAddress: ''}, {
+        mutate({ name: deviceName, pin, type: selectedRoom, status: false, macAddress: mac}, {
             onSuccess: () => {
                 setDeviceName('');
                 setPin('');
+                setMac('');
             },
             onError: (error) => {
                 console.error("Lỗi khi thêm thiết bị:", error);
@@ -131,6 +136,13 @@ const DeviceCard = memo(({ device, roomId }) => {
                             onChangeText={setPin}
                             style={styles.input}
                             keyboardType="numeric"
+                        />
+                        <TextInput 
+                            placeholder='Nhập địa chỉ mac...'
+                            placeholderTextColor="black"
+                            value={mac}
+                            onChangeText={setMac}
+                            style={styles.input}
                         />
                         <View style={styles.actions}>
                             <TouchableOpacity

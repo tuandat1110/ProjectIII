@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { RoomService } from "./room.service";
 import { RoomDto } from "./dto/room.dto";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
@@ -30,14 +30,21 @@ export class RoomController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
     @Put('/:id')
-    async updateRoom(@Param('id') id: number,@Body() roomDto: RoomDto): Promise<RoomDto> {
+    async updateRoom(@Param('id') id: string,@Body() roomDto: RoomDto): Promise<RoomDto> {
         return await this.roomService.updateRoom(roomDto, id);
     }
 
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
+    @Delete('/:id')
+    async deleteRoom(@Param('id') id: string): Promise<RoomDto> {
+        return await this.roomService.deleteRoom(id);
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'))
     @Get('/:id/devices')
-    async getAllDevicesById(@Param('id') id: number): Promise<DeviceDto[]> {
+    async getAllDevicesById(@Param('id') id: string): Promise<DeviceDto[]> {
         return await this.roomService.getAllDeviceById(id);
     }
 }

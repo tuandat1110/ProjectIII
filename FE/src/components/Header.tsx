@@ -26,14 +26,15 @@ const Header = ( {title, nameIcon}: IHeader) => {
 
     const userId = useSelector((state: RootState) => state.auth.user?.id);
     const currentSelectedId = useSelector((state: RootState) => state.house.selectedHomeId);
+    console.log(`current house: ${currentSelectedId}`);
     const { data: houses, isLoading, error } = useGetHouses(userId as string);
     const { mutate, isPending } = useAddHouse(userId as string);
 
     const handleSave = () => {
-        if(!homeName.trim() || !homeId.trim() || !userId) {
+        if(!homeName.trim() || !userId) {
             return;
         }
-        mutate({userId: userId,houseData: { home_id: homeId, name: homeName, address: address, description: description }}, {
+        mutate({userId: userId,houseData: { name: homeName, address: address, description: description }}, {
             onSuccess: () => {
                 setVisibleForAddHome(false);
                 setHomeName("");
@@ -50,7 +51,7 @@ const Header = ( {title, nameIcon}: IHeader) => {
         })
     };
     const handleSelect = (home: House) => {
-        dispatch(setHomeInfo({ id: home.id, mac: home.home_id }));
+        dispatch(setHomeInfo({ id: home.id, houseName: home.name }));
         setVisible(false);
     };
     return (
@@ -135,14 +136,6 @@ const Header = ( {title, nameIcon}: IHeader) => {
                             placeholderTextColor="black"
                             value={homeName}
                             onChangeText={setHomeName}
-                            style={styles.input}
-                        />
-
-                        <TextInput 
-                            placeholder="Nhập id của nhà ..."
-                            placeholderTextColor="black"
-                            value={homeId}
-                            onChangeText={setHomeId}
                             style={styles.input}
                         />
 

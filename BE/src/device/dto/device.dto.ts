@@ -14,9 +14,9 @@ export class DeviceDto {
     @IsString()
     pin: string;
 
-    @ApiProperty({ example:"192.168.0.100", description: "Địa chỉ ip"})
+    @ApiProperty({ example:"68769ba7dbcc", description: "Địa chỉ ip"})
     @IsString()
-    ipAddress: string;
+    macAddress: string;
 
     @IsBoolean()
     @ApiProperty({ example: false, description: "Trạng thái của đèn"})
@@ -24,5 +24,5 @@ export class DeviceDto {
 
     @ApiProperty({ example: 1, description: "Room ID"})
     @IsNotEmpty()
-    roomId: number;
+    roomId: string;
 }

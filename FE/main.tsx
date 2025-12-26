@@ -11,6 +11,7 @@ import Toast from 'react-native-toast-message';
 import RoomScreen from './src/screens/main/RoomScreen';
 import ProfileDetailScreen from './src/screens/main/ProfileDetailScreen';
 import DashboardScreen from './src/screens/main/DashboardScreen';
+import UpdateProfileDate from './src/screens/main/UpdateProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,6 +29,7 @@ const AppStack = () => (
     <Stack.Screen name="Room" component={RoomScreen}/>
     <Stack.Screen name="Dashboard" component={DashboardScreen} />
     <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
+    <Stack.Screen name="UpdateProfileScreen" component={UpdateProfileDate} />
   </Stack.Navigator>
 );
 

@@ -4,12 +4,12 @@ type HomeIdentifier = string | number | null;
 
 interface HouseState {
     selectedHomeId: HomeIdentifier;
-    macAddress: string | null; 
+    houseName: string | null; 
 }
 
 const initialState: HouseState = {
     selectedHomeId: null,
-    macAddress: null,
+    houseName: null,
 };
 
 const houseSlice = createSlice({
@@ -19,24 +19,24 @@ const houseSlice = createSlice({
         selectHome: (state, action: PayloadAction<HomeIdentifier>) => {
             state.selectedHomeId = action.payload;
         },
-        setMacAddress: (state, action: PayloadAction<string | null>) => {
-            state.macAddress = action.payload;
+        setHouseName: (state, action: PayloadAction<string | null>) => {
+            state.houseName = action.payload;
         },
         setHomeInfo: (
             state,
-            action: PayloadAction<{ id: HomeIdentifier; mac: string | null }>
+            action: PayloadAction<{ id: HomeIdentifier; name: string | null }>
         ) => {
             state.selectedHomeId = action.payload.id;
-            state.macAddress = action.payload.mac;
+            state.houseName = action.payload.name;
         },
         clearHome: (state) => {
             state.selectedHomeId = null;
-            state.macAddress = null;
+            state.houseName = null;
         }
     },
 });
 
-export const { selectHome, setMacAddress, setHomeInfo, clearHome } =
+export const { selectHome, setHouseName, setHomeInfo, clearHome } =
     houseSlice.actions;
 
 export default houseSlice.reducer;

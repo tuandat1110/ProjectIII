@@ -45,8 +45,7 @@ model Account {
 
 
 model House {
-  id          Int     @id @default(autoincrement())
-  home_id     String  @unique
+  id          String     @id @default(uuid())
   name        String
   address     String
   description String
@@ -56,11 +55,11 @@ model House {
 }
 
 model Room {
-  id             Int             @id @default(autoincrement())
+  id             String             @id @default(uuid())
   name           String
   description    String
   image          String?
-  houseId        Int
+  houseId        String
   house          House           @relation(fields: [houseId], references: [id])
   devices        Device[]
   sensors        Sensor[]
@@ -71,10 +70,10 @@ model Device {
   name           String
   type           String
   pin            String
-  ipAddress      String
+  macAddress     String
   status         Boolean
   lastUpdated    DateTime?       @updatedAt
-  roomId         Int
+  roomId         String
   room           Room            @relation(fields: [roomId], references: [id])
 }
 
@@ -83,10 +82,10 @@ model Sensor {
   name           String
   type           String
   unit           String
-  ipAddress      String
+  macAddress      String
   createdAt      DateTime        @default(now())
-  sensorId       Int
-  room           Room            @relation(fields: [sensorId], references: [id])
+  roomId       String
+  room           Room            @relation(fields: [roomId], references: [id])
 }
 
 
