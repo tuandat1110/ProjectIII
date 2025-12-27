@@ -19,7 +19,7 @@ export class RoomService {
         });
     }
 
-    async updateRoom(body: RoomDto,id: number | undefined): Promise<RoomDto> {
+    async updateRoom(body: RoomDto,id: string | undefined): Promise<RoomDto> {
         return await this.prisma.room.update({
             where: {
                 id: id
@@ -30,7 +30,7 @@ export class RoomService {
         })
     }
 
-    async getAllDeviceById(id: number): Promise<DeviceDto[]> {
+    async getAllDeviceById(id: string): Promise<DeviceDto[]> {
         return await this.prisma.device.findMany({
             where: {
                 roomId: id,
@@ -38,4 +38,9 @@ export class RoomService {
         })
     }
 
+    async deleteRoom(id: string): Promise<any> {
+        return await this.prisma.room.delete({
+            where: { id: id }
+        })
+    }
 }

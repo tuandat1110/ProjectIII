@@ -12,6 +12,7 @@ export type RootStackParamList = {
     Room: Room;
     ProfileDetail: undefined;
     Dashboard: undefined;
+    UpdateProfileScreen: undefined;
 }
 
 /** Tab params (nếu dùng tab) */

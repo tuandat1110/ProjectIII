@@ -6,6 +6,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { deviceApi } from '../../api/deviceApi';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
+import { uuidToBase62 } from '../../utils/utils';
 
 const screenWidth = Dimensions.get('window').width;
 const PADDING_HORIZONTAL = 15;
@@ -25,7 +28,7 @@ export default function DashboardScreen() {
   const [selectedDurationSeconds, setSelectedDurationSeconds] = useState(
     String(DURATION_OPTIONS[1].durationSeconds) // Mặc định là 1 giờ (3600 giây)
   );
-
+  const currentSelectedId = useSelector((state: RootState) => state.house.selectedHomeId);
   const navigation = useNavigation() as any;
   const aggregateSeconds = useMemo(() => {
     const duration = parseInt(selectedDurationSeconds, 10);
@@ -44,9 +47,9 @@ export default function DashboardScreen() {
     try {
       const durationMinutes = Math.round(parseInt(selectedDurationSeconds, 10) / 60);
 
-      const url = `http://192.168.0.102:3000/influx/history?durationMinutes=${durationMinutes}&aggregateSeconds=${aggregateSeconds}`;
+      //const url = `http://192.168.0.102:3000/influx/history?durationMinutes=${durationMinutes}&aggregateSeconds=${aggregateSeconds}&homeId=${uuidToBase62(currentSelectedId as string)}`;
 
-      const res = await deviceApi.getHistoryData(durationMinutes,aggregateSeconds);
+      const res = await deviceApi.getHistoryData(durationMinutes,aggregateSeconds,uuidToBase62(currentSelectedId as string));
       //console.log(`Fetching: durationMinutes=${durationMinutes}, aggregateSeconds=${aggregateSeconds}. Data points received: ${JSON.stringify(res)}`);
       setChartData(res);
     } catch (e) {

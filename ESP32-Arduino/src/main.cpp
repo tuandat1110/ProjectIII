@@ -16,27 +16,54 @@ DisplayService ui(display);
 QueueHandle_t ledQueue;
 String subscribeCommandTopic;
 unsigned long lastReconnectAttempt = 0;
+String sensorPublishTopic;
 
-// Hàm callback giữ nguyên logic copy an toàn
 void callback(char *topic, byte *message, unsigned int length) {
-    LedCommand cmd;
-    strncpy(cmd.topic, topic, sizeof(cmd.topic) - 1);
-    cmd.topic[sizeof(cmd.topic) - 1] = '\0';
-    unsigned int payload_len = (length < sizeof(cmd.payload)) ? length : (sizeof(cmd.payload) - 1);
-    memcpy(cmd.payload, message, payload_len);
-    cmd.payload[payload_len] = '\0';
+    char topicCopy[128];
+    strncpy(topicCopy, topic, sizeof(topicCopy) - 1);
+    topicCopy[sizeof(topicCopy) - 1] = '\0';
 
-    if (xQueueSend(ledQueue, &cmd, 0) != pdTRUE) {
-        Serial.println("Queue đầy, không gửi được lệnh!");
-    } else {
-        Serial.printf("Đã nhận lệnh [%s]: %s\n", cmd.topic, cmd.payload);
+    char *parts[6]; 
+    int count = 0;
+    char *token = strtok(topicCopy, "/");
+    while (token != NULL && count < 6) {
+        parts[count++] = token;
+        token = strtok(NULL, "/");
+    }
+    for(int i = 0; i < length && i < 64; i++) {
+        Serial.print((char)message[i]);
+    }
+    for(int i=0; i < 6; i++) {
+        Serial.printf("Part %d: %s\n", i, parts[i]);
+    }
+    if (count >= 5) {
+        String recHId = String(parts[2]);
+        String recRId = String(parts[3]);
+
+        if (recHId == wifi.getHomeId() && recRId == wifi.getRoomId()) {
+            LedCommand cmd;
+            strncpy(cmd.topic, topic, sizeof(cmd.topic) - 1);
+            cmd.topic[sizeof(cmd.topic) - 1] = '\0';
+
+            unsigned int payload_len = (length < sizeof(cmd.payload)) ? length : (sizeof(cmd.payload) - 1);
+            memcpy(cmd.payload, message, payload_len);
+            cmd.payload[payload_len] = '\0';
+
+            if (xQueueSend(ledQueue, &cmd, 0) != pdTRUE) {
+                Serial.println("Queue đầy!");
+            } else {
+                Serial.printf("Đã nhận lệnh [%s]: %s\n", cmd.topic, cmd.payload);
+            }
+        } else {
+            Serial.println("ID không khớp.");
+        }
     }
 }
 
 // Task Led Control - Giữ nguyên logic strstr "/cmd" và "/state"
 void TaskLedControl(void *pvParameters) {
     LedCommand cmd;
-    char stateTopicBuffer[64];
+    char stateTopicBuffer[128]; 
     for (;;) {
         if (xQueueReceive(ledQueue, &cmd, portMAX_DELAY) == pdTRUE) {
             int pin; char status[8];
@@ -47,18 +74,15 @@ void TaskLedControl(void *pvParameters) {
                 char *cmd_pos = strstr(cmd.topic, "/cmd");
                 if (cmd_pos) {
                     int len_prefix = cmd_pos - cmd.topic;
-                    strncpy(stateTopicBuffer, cmd.topic, len_prefix);
-                    stateTopicBuffer[len_prefix] = '\0';
-                    strcat(stateTopicBuffer, "/state");
+                    snprintf(stateTopicBuffer, sizeof(stateTopicBuffer), "%.*s/state", len_prefix, cmd.topic);
                 } else {
-                    strncpy(stateTopicBuffer, cmd.topic, sizeof(stateTopicBuffer) - 1);
+                    snprintf(stateTopicBuffer, sizeof(stateTopicBuffer), "%s/state", cmd.topic);
                 }
 
                 char feedback[16];
                 snprintf(feedback, sizeof(feedback), "%d:%s", pin, (command == HIGH ? "OFF" : "ON"));
                 mqtt.publish(stateTopicBuffer, feedback, true);
-            } else {
-                Serial.println("Payload không hợp lệ!");
+                Serial.printf("Đã gửi phản hồi tới [%s]: %s\n", stateTopicBuffer, feedback);
             }
         }
     }
@@ -74,8 +98,10 @@ void TaskReadDHT11(void *pvParameters) {
             Serial.printf(" Nhiệt độ: %.1f°C,  Độ ẩm: %.1f%%\n", data.temperature, data.humidity);
             String payload = "{\"temperature\":" + String(data.temperature, 1) + ",\"humidity\":" + String(data.humidity, 1) + "}";
             if (mqtt.isConnected()) {
-                mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
-                Serial.println("Đã gửi MQTT: " + payload);
+                // mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
+                // Serial.println("Đã gửi MQTT: " + payload);
+                mqtt.publish(sensorPublishTopic.c_str(), payload.c_str());
+                Serial.println("Đã gửi MQTT tới [" + sensorPublishTopic + "]: " + payload);
             } else {
                 Serial.println("TaskReadDHT11: MQTT Disconnected, cannot publish.");
             }
@@ -103,30 +129,28 @@ void TaskMQTT(void *pvParameters) {
 
 void setup() {
     Serial.begin(115200);
-    
-    // 1. Khởi tạo Hardware
+
     pinMode(LED_PIN, OUTPUT);
     pinMode(4, OUTPUT);
     digitalWrite(4, HIGH);
     digitalWrite(LED_PIN, HIGH);
+    pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
     ledQueue = xQueueCreate(30, sizeof(LedCommand));
 
-    // 2. Màn hình
     ui.init(); 
     ui.showSystemInfo("WIFI CONNECTING...");
 
-    // 3. Kết nối WiFi (Nếu chưa có hoặc sai, nó sẽ tự động phát AP tại đây)
     wifi.connect(); 
 
-    // 4. Chỉ khi WiFi đã thông suốt thì mới khởi động MQTT và các Task
     if (wifi.isConnected()) {
         uint64_t chipid = ESP.getEfuseMac();
         char chipStr[32];
         snprintf(chipStr, sizeof(chipStr), "%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
-        
+        String hId = wifi.getHomeId(); 
+        String rId = wifi.getRoomId();
         String CONTROLLER_ID = String((uint32_t)(chipid >> 32), HEX) + String((uint32_t)chipid, HEX);
-        subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/cmd";
-
+        subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/+/cmd";
+        sensorPublishTopic = "home/" + hId + "/" + rId + "/dht11/data";
         ui.showSystemInfo(chipStr);
         
         mqtt.init(mqtt_server, mqtt_port, callback);
@@ -139,7 +163,19 @@ void setup() {
 }
 
 void loop() {
-    // Luôn xử lý WebServer nếu đang trong Config Mode
+    if (digitalRead(RESET_BUTTON_PIN) == LOW) { 
+        unsigned long startTime = millis();
+        while (digitalRead(RESET_BUTTON_PIN) == LOW) {
+            if (millis() - startTime > RESET_HOLD_TIME) {
+                Serial.println("Đang xóa cấu hình và khởi động lại...");
+                ui.showSystemInfo("RESETING...");
+                wifi.resetSettings(); 
+                delay(1000);
+                ESP.restart(); 
+            }
+            delay(10);
+        }
+    }
     wifi.loopConfig();
-    delay(1);
+    delay(10);
 }

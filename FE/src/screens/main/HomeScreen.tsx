@@ -15,6 +15,7 @@ import { MainTabParamList, RootStackParamList } from "../../navigation/types";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
+import { uuidToBase62 } from "../../utils/utils";
 
 type NavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Home'>,
@@ -49,7 +50,6 @@ const HomeScreen = () => {
 
   const { data: rooms, isLoading, error } = useGetRooms(currentSelectedId as string);
 
-  console.log(`Current home: ${currentSelectedId}`);
   const removePrefix = (name: string) => {
     if (!name) return "";
     return name
@@ -87,8 +87,7 @@ const HomeScreen = () => {
 
   // Lấy dữ liệu cảm biến qua WebSocket
   useEffect(() => {
-    const handleAppStateChange = (nextAppState:  "active" | "background" | "inactive") => {
-      // Khi app từ background -> foreground, render dữ liệu mới nhất
+    const handleAppStateChange = (nextAppState: "active" | "background" | "inactive") => {
       if (
         appState.current.match(/inactive|background/) &&
         nextAppState === "active" &&
@@ -106,13 +105,25 @@ const HomeScreen = () => {
       handleAppStateChange
     );
 
+    if (!currentSelectedId) {
+      return () => {
+        appStateListener.remove();
+      };
+    }
+
+    const channelName = `sensor_data_${uuidToBase62(currentSelectedId as string)}`;
+    console.log(`kenh: ${channelName}`);
+
+    socket.connect();
+
     socket.on("connect", () => console.log("Connected to WebSocket server"));
+
     let lastRenderTime = 0;
-    socket.on("sensor_data", (payload) => {
+    socket.on(channelName, (payload) => {
       latestPayload.current = payload;
       if (appState.current === "active") {
         const now = Date.now();
-        if (now - lastRenderTime > 1000) { // render max 1 lần / giây
+        if (now - lastRenderTime > 1000) {
           const { temperature, humidity } = payload.payload;
           setData({ temperature, humidity });
           setDescription(generateDescription(temperature, humidity));
@@ -120,14 +131,15 @@ const HomeScreen = () => {
         }
       }
     });
+
     socket.on("disconnect", () => console.log("Disconnected from server"));
 
     return () => {
-      socket.off("sensor_data");
+      socket.off(channelName);
       socket.disconnect();
       appStateListener.remove();
     };
-  }, []);
+  }, [currentSelectedId]);
 
   // Lấy vị trí GPS
   useEffect(() => {
@@ -220,6 +232,7 @@ const HomeScreen = () => {
           temperature={data.temperature}
           description={description}
           humidity={data.humidity}
+          currentSelectedId={(currentSelectedId ?? undefined) as string | undefined}
         />
       </TouchableOpacity>
       <Text style={styles.allRoom}>

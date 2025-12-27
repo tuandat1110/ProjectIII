@@ -8,9 +8,9 @@ export class HouseDto {
     @ApiProperty({ example: "test", description: "Tên nhà" })
     name: string;
 
-    @ApiProperty({ example: "68769ba7dbcc", description: "House ID" })
-    @IsString()
-    home_id: string;
+    // @ApiProperty({ example: "68769ba7dbcc", description: "House ID" })
+    // @IsString()
+    // home_id: string;
 
     @ApiProperty({ example: "Thường Tín, Hà Nội", description: "Địa chỉ của nhà"})
     @IsString()

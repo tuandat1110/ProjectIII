@@ -9,8 +9,8 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
     private client: MqttClient | null;
     private readonly logger = new Logger(MqttService.name);
     private readonly topics = [
-        "home/house1/livingroom/dht11/data",   // sensor
-        "home/+/+/+/state"                     // feedback devices, + = wildcard
+        "home/+/+/dht11/data",   // sensor
+        "home/+/+/+/+/state"                     // feedback devices, + = wildcard
     ];
 
 
@@ -70,8 +70,9 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
                 this.logger.debug(`Payload is not JSON for topic ${topic}, using raw string`);
             }
             this.logger.debug(`Received message on ${topic}: ${payloadStr}`);
-            
+            console.log(`Received message on ${topic}: ${payloadStr}`);
             if(topic.includes('/state')) {
+                console.log('Phat hien device state changed event, phat su kien ...');
                 this.eventEmitter.emit("device.state.changed", {
                     topic,
                     payload: parsed,
@@ -83,11 +84,12 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
             try {
                 // tùy nhu cầu: emit cả topic, raw payload, timestamp...
                 if(topic.includes('dht11/data')) {
-                    this.wsGateway.sendSensorData({ topic, payload: parsed, receivedAt: new Date().toISOString() });
-                    const roomId = topic.split('/')[2]; 
+                     const homeId = topic.split('/')[1];
+                    this.wsGateway.sendSensorData(homeId, { topic, payload: parsed, receivedAt: new Date().toISOString() });
+                    // const roomId = topic.split('/')[2]; 
                     const temp = parsed.temperature;
                     const humidity = parsed.humidity;
-                    this.influxService.writeSensorData(roomId, temp, humidity);
+                    this.influxService.writeSensorData(homeId, temp, humidity);
                 }
             } catch (e) {
                 this.logger.error('Failed to emit websocket event: ' + (e as Error).message);

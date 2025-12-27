@@ -20,7 +20,7 @@ export class HouseController {
     @Get('/:id/rooms')
     @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
-    async getAllRoomsById(@Param('id') id: number): Promise<RoomDto[]> {
+    async getAllRoomsById(@Param('id') id: string): Promise<RoomDto[]> {
         return await this.houseService.getAllRoomsById(id);
     }
 
@@ -40,7 +40,7 @@ export class HouseController {
     @ApiResponse({ status: 200, description: 'Update house successfully'})
     @ApiBody({ type: HouseDto })
     @Put('/:id')
-    async updateHouse(@Param('id') id: number, @Body() body: HouseDto): Promise<HouseDto> {
+    async updateHouse(@Param('id') id: string, @Body() body: HouseDto): Promise<HouseDto> {
         return await this.houseService.updateHouse(id,body);
     }
 
@@ -49,7 +49,7 @@ export class HouseController {
     @ApiOperation({ summary: 'Delete house' })
     @ApiResponse({ status: 200, description: 'Delete house successfully'})
     @Delete('/:id')
-    async deleteHouse(@Param('id') id: number): Promise<HouseDto> {
+    async deleteHouse(@Param('id') id: string): Promise<HouseDto> {
         return await this.houseService.deleteHouse(id);
     }
 }

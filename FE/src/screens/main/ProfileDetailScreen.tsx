@@ -72,7 +72,7 @@ const ProfileDetailScreen = () => {
     // Hàm xử lý nút chỉnh sửa
     const handleEditProfile = () => {
         // Thêm logic điều hướng tới màn hình chỉnh sửa hoặc mở Modal
-        console.log("Mở giao diện chỉnh sửa profile");
+        navigation.navigate('UpdateProfileScreen');
     };
 
     const role = user?.role === "USER" ? "Thành viên" : "Người quản trị";

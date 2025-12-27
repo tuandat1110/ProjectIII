@@ -21,6 +21,9 @@ public:
     void startConfigPortal(); 
     void loopConfig(); 
     bool isConnected();
+    String getHomeId();
+    String getRoomId();
+    void resetSettings();
 };
 
 #endif

@@ -20,7 +20,7 @@ export class HouseService {
         })
     }
 
-    async updateHouse(id: number, body: HouseDto): Promise<HouseDto> {
+    async updateHouse(id: string, body: HouseDto): Promise<HouseDto> {
         return await this.prisma.house.update({
             where: {
                 id: id
@@ -31,7 +31,7 @@ export class HouseService {
         })
     }
 
-    async deleteHouse(id: number): Promise<HouseDto> {
+    async deleteHouse(id: string): Promise<HouseDto> {
         return await this.prisma.house.delete({
             where: {
                 id: id,
@@ -39,10 +39,10 @@ export class HouseService {
         })
     }
 
-    async getAllRoomsById(id: number): Promise<RoomDto[]> {
+    async getAllRoomsById(id: string): Promise<RoomDto[]> {
         const rooms = await this.prisma.room.findMany({
             where: {
-                houseId: id,
+                houseId: String(id),
             }
         });
         return rooms;

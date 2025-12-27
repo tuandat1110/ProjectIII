@@ -10,6 +10,7 @@ interface ControlPayload {
     pin: number;
     mac: string | null | undefined;
     roomId: number | string;
+    homeId: number | string;
 }
 
 export const useGetDevices = (roomId: string | number) => {
@@ -51,7 +52,8 @@ export const useControlDevice = () => {
                     status: payload.status,
                     pin: payload.pin,
                     mac: payload.mac,
-                    roomId: payload.roomId
+                    roomId: payload.roomId,
+                    houseId: payload.homeId
                 }
             );
         },
