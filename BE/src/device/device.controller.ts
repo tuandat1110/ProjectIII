@@ -60,8 +60,8 @@ export class DeviceController {
         @Body() body: ControlDeviceDto
     ) {
         console.log("hihihihihihi");
-        // topic chuẩn: home/{mac}/{houseId}/{roomId}/cmd
-        const topic = `home/${body.mac}/${body.houseId}/${body.roomId}/cmd`;
+        // topic chuẩn: home/{mac}/{houseId}/{roomId}/{deviceId}/cmd
+        const topic = `home/${body.mac}/${body.houseId}/${body.roomId}/${deviceId}/cmd`;
         // payload gửi lên ESP32
         const payload = `${body.pin}:${body.status}`;
         this.mqtt.publish(topic, payload, { qos: 1, retain: false });

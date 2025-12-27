@@ -6,8 +6,8 @@
  * để đẩy vào Queue xử lý điều khiển thiết bị.
  */
 struct LedCommand {
-    char topic[64];   // Lưu trữ topic mà tin nhắn được gửi đến
-    char payload[16]; // Lưu trữ nội dung lệnh, ví dụ: "2:ON" hoặc "2:OFF"
+    char topic[128];   // Lưu trữ topic mà tin nhắn được gửi đến
+    char payload[32]; // Lưu trữ nội dung lệnh, ví dụ: "2:ON" hoặc "2:OFF"
 };
 
 #endif

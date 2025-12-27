@@ -43,9 +43,9 @@ export class DeviceService {
     @OnEvent('device.state.changed')
     async handleDeviceState(event: { topic: string; payload: string }) {
         const { topic, payload } = event;
-        // topic: home/{mac}/{homeId}/{roomId}/state
+        // topic: home/{mac}/{houseId}/{roomId}/{deviceId}/state
         const parts = topic.split('/');
-        const deviceId = Number(parts[3]);
+        const deviceId = Number(parts[4]);
         const [pinStr, statusStr] = payload.split(':');
         const pin = Number(pinStr);
         const status = statusStr.toUpperCase() === 'ON'; 

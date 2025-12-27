@@ -23,22 +23,22 @@ void callback(char *topic, byte *message, unsigned int length) {
     strncpy(topicCopy, topic, sizeof(topicCopy) - 1);
     topicCopy[sizeof(topicCopy) - 1] = '\0';
 
-    char *parts[5];
+    char *parts[6]; 
     int count = 0;
     char *token = strtok(topicCopy, "/");
-    while (token != NULL && count < 5) {
+    while (token != NULL && count < 6) {
         parts[count++] = token;
         token = strtok(NULL, "/");
     }
-
-    for(int i=0;i<5;i++) {
-        Serial.printf("parts[%d]: %s\n", i, parts[i] ? parts[i] : "NULL");
+    for(int i = 0; i < length && i < 64; i++) {
+        Serial.print((char)message[i]);
     }
-
-    if (count >= 3) {
+    for(int i=0; i < 6; i++) {
+        Serial.printf("Part %d: %s\n", i, parts[i]);
+    }
+    if (count >= 5) {
         String recHId = String(parts[2]);
         String recRId = String(parts[3]);
-        Serial.println("recHId: " + recHId + ", recRId: " + recRId);
 
         if (recHId == wifi.getHomeId() && recRId == wifi.getRoomId()) {
             LedCommand cmd;
@@ -50,12 +50,12 @@ void callback(char *topic, byte *message, unsigned int length) {
             cmd.payload[payload_len] = '\0';
 
             if (xQueueSend(ledQueue, &cmd, 0) != pdTRUE) {
-                Serial.println("Queue đầy, không gửi được lệnh!");
+                Serial.println("Queue đầy!");
             } else {
                 Serial.printf("Đã nhận lệnh [%s]: %s\n", cmd.topic, cmd.payload);
             }
         } else {
-            Serial.println("ID không khớp, bỏ qua lệnh.");
+            Serial.println("ID không khớp.");
         }
     }
 }
@@ -63,11 +63,10 @@ void callback(char *topic, byte *message, unsigned int length) {
 // Task Led Control - Giữ nguyên logic strstr "/cmd" và "/state"
 void TaskLedControl(void *pvParameters) {
     LedCommand cmd;
-    char stateTopicBuffer[64];
+    char stateTopicBuffer[128]; 
     for (;;) {
         if (xQueueReceive(ledQueue, &cmd, portMAX_DELAY) == pdTRUE) {
             int pin; char status[8];
-            Serial.printf("Xử lý lệnh cho topic [%s] với payload [%s]\n", cmd.topic, cmd.payload);
             if (sscanf(cmd.payload, "%d:%7s", &pin, status) == 2) {
                 int command = (strcasecmp(status, "ON") == 0) ? LOW : HIGH;
                 digitalWrite(pin, command);
@@ -75,19 +74,15 @@ void TaskLedControl(void *pvParameters) {
                 char *cmd_pos = strstr(cmd.topic, "/cmd");
                 if (cmd_pos) {
                     int len_prefix = cmd_pos - cmd.topic;
-                    strncpy(stateTopicBuffer, cmd.topic, len_prefix);
-                    stateTopicBuffer[len_prefix] = '\0';
-                    strcat(stateTopicBuffer, "/state");
+                    snprintf(stateTopicBuffer, sizeof(stateTopicBuffer), "%.*s/state", len_prefix, cmd.topic);
                 } else {
-                    strncpy(stateTopicBuffer, cmd.topic, sizeof(stateTopicBuffer) - 1);
+                    snprintf(stateTopicBuffer, sizeof(stateTopicBuffer), "%s/state", cmd.topic);
                 }
 
                 char feedback[16];
                 snprintf(feedback, sizeof(feedback), "%d:%s", pin, (command == HIGH ? "OFF" : "ON"));
                 mqtt.publish(stateTopicBuffer, feedback, true);
                 Serial.printf("Đã gửi phản hồi tới [%s]: %s\n", stateTopicBuffer, feedback);
-            } else {
-                Serial.println("Payload không hợp lệ!");
             }
         }
     }
@@ -154,7 +149,7 @@ void setup() {
         String hId = wifi.getHomeId(); 
         String rId = wifi.getRoomId();
         String CONTROLLER_ID = String((uint32_t)(chipid >> 32), HEX) + String((uint32_t)chipid, HEX);
-        subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/cmd";
+        subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/+/cmd";
         sensorPublishTopic = "home/" + hId + "/" + rId + "/dht11/data";
         ui.showSystemInfo(chipStr);
         

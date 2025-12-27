@@ -21,7 +21,6 @@ const WeatherCard = ({
   iconName = "weather-partly-cloudy",
   currentSelectedId,
 }: WeatherCardProps) => {
-  console.log(`Current selected ID in WeatherCard: ${currentSelectedId}`);
   return (
     <LinearGradient
       colors={["#6dd5ed", "#2193b0"]}

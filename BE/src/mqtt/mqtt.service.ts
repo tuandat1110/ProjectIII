@@ -10,7 +10,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
     private readonly logger = new Logger(MqttService.name);
     private readonly topics = [
         "home/+/+/dht11/data",   // sensor
-        "home/+/+/+/state"                     // feedback devices, + = wildcard
+        "home/+/+/+/+/state"                     // feedback devices, + = wildcard
     ];
 
 
@@ -70,7 +70,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
                 this.logger.debug(`Payload is not JSON for topic ${topic}, using raw string`);
             }
             this.logger.debug(`Received message on ${topic}: ${payloadStr}`);
-            
+            console.log(`Received message on ${topic}: ${payloadStr}`);
             if(topic.includes('/state')) {
                 console.log('Phat hien device state changed event, phat su kien ...');
                 this.eventEmitter.emit("device.state.changed", {
