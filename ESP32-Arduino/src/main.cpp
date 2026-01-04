@@ -17,6 +17,7 @@ QueueHandle_t ledQueue;
 String subscribeCommandTopic;
 unsigned long lastReconnectAttempt = 0;
 String sensorPublishTopic;
+String flamePublishTopic;
 
 void callback(char *topic, byte *message, unsigned int length) {
     char topicCopy[128];
@@ -98,8 +99,8 @@ void TaskReadDHT11(void *pvParameters) {
             Serial.printf(" Nhiệt độ: %.1f°C,  Độ ẩm: %.1f%%\n", data.temperature, data.humidity);
             String payload = "{\"temperature\":" + String(data.temperature, 1) + ",\"humidity\":" + String(data.humidity, 1) + "}";
             if (mqtt.isConnected()) {
-                // mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
-                // Serial.println("Đã gửi MQTT: " + payload);
+                //mqtt.publish("home/house1/livingroom/dht11/data", payload.c_str());
+                //Serial.println("Đã gửi MQTT: " + payload);
                 mqtt.publish(sensorPublishTopic.c_str(), payload.c_str());
                 Serial.println("Đã gửi MQTT tới [" + sensorPublishTopic + "]: " + payload);
             } else {
@@ -127,11 +128,51 @@ void TaskMQTT(void *pvParameters) {
     }
 }
 
+void TaskFlameSensor(void *pvParameters) {
+    int lastFlameState = HIGH; // HIGH = không cháy (phổ biến với flame sensor)
+    unsigned long lastPublishTime = 0;
+    const unsigned long debounceTime = 3000; // chống spam (3s)
+
+    for (;;) {
+        int flameState = digitalRead(FLAME_PIN);
+        unsigned long now = millis();
+
+        // Chỉ xử lý khi trạng thái thay đổi
+        if (flameState != lastFlameState && (now - lastPublishTime > debounceTime)) {
+
+            if (mqtt.isConnected()) {
+                String payload;
+
+                if (flameState == LOW) {
+                    // PHÁT HIỆN CHÁY
+                    payload = "{\"type\":\"FIRE\",\"status\":1}";
+                    Serial.println("🔥 FIRE DETECTED!");
+                } else {
+                    // HẾT CHÁY
+                    payload = "{\"type\":\"FIRE\",\"status\":0}";
+                    Serial.println("✅ FIRE CLEARED");
+                }
+
+                mqtt.publish(flamePublishTopic.c_str(), payload.c_str(), true);
+                Serial.println("Đã gửi MQTT [" + flamePublishTopic + "]: " + payload);
+            }
+
+            lastPublishTime = now;
+            lastFlameState = flameState;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(200)); // đọc sensor nhanh, nhưng không spam
+    }
+}
+
+
+
 void setup() {
     Serial.begin(115200);
 
     pinMode(LED_PIN, OUTPUT);
     pinMode(4, OUTPUT);
+    pinMode(FLAME_PIN, INPUT);
     digitalWrite(4, HIGH);
     digitalWrite(LED_PIN, HIGH);
     pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
@@ -151,6 +192,7 @@ void setup() {
         String CONTROLLER_ID = String((uint32_t)(chipid >> 32), HEX) + String((uint32_t)chipid, HEX);
         subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/+/cmd";
         sensorPublishTopic = "home/" + hId + "/" + rId + "/dht11/data";
+        flamePublishTopic = "home/" + hId + "/" + rId + "/flame/alert";
         ui.showSystemInfo(chipStr);
         
         mqtt.init(mqtt_server, mqtt_port, callback);
@@ -159,6 +201,7 @@ void setup() {
         xTaskCreatePinnedToCore(TaskReadDHT11, "TaskReadDHT11", 4096, NULL, 1, NULL, 0);
         xTaskCreatePinnedToCore(TaskLedControl, "TaskLedControl", 4096, NULL, 3, NULL, 0);
         xTaskCreatePinnedToCore(TaskMQTT, "TaskMQTT", 4096, NULL, 3, NULL, 1);
+        xTaskCreatePinnedToCore(TaskFlameSensor, "TaskFlame", 4096, NULL, 2, NULL, 0);
     }
 }
 

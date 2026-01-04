@@ -41,6 +41,7 @@ model Account {
 
   role        Role     @default(USER)
   houses      House[]
+  fcmTokens   FcmToken[]
 }
 
 
@@ -52,6 +53,7 @@ model House {
   accountId   Int
   account     Account @relation(fields: [accountId], references: [id])
   rooms       Room[]
+  fcmTokens   FcmToken[]
 }
 
 model Room {
@@ -87,5 +89,25 @@ model Sensor {
   roomId       String
   room           Room            @relation(fields: [roomId], references: [id])
 }
+
+model FcmToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  platform  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accountId Int
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  houseId   String?
+  house     House?   @relation(fields: [houseId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([houseId])
+}
+
+
 
 

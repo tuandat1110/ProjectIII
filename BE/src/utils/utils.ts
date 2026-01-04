@@ -51,36 +51,34 @@ export function uuidToBase62(uuid: string): string {
 }
 
 export function base62ToUuid(base62: string): string {
-    const bytes = [];
-    let tempChars = base62.split("");
+    const chars = base62.split("");
+    const bytes = [0];
 
-    while (tempChars.length > 0) {
-        let remainder = 0;
-        let nextChars = [];
-        let firstNonZero = false;
+    for (const char of chars) {
+        let value = BASE62.indexOf(char);
+        if (value === -1) throw new Error("Invalid Base62 character");
 
-        for (let i = 0; i < tempChars.length; i++) {
-            const char = tempChars[i];
-            const value = remainder * 62 + BASE62.indexOf(char);
-            const quotient = Math.floor(value / 256);
-            remainder = value % 256;
-
-            if (quotient > 0 || firstNonZero) {
-                nextChars.push(BASE62[quotient]);
-                firstNonZero = true;
-            }
+        for (let i = 0; i < bytes.length; i++) {
+            value += bytes[i] * 62;
+            bytes[i] = value & 0xff;
+            value >>= 8;
         }
 
-        bytes.unshift(remainder);
-        tempChars = nextChars;
-        if (tempChars.length === 0) break;
+        while (value > 0) {
+            bytes.push(value & 0xff);
+            value >>= 8;
+        }
     }
 
     while (bytes.length < 16) {
-        bytes.unshift(0);
+        bytes.push(0);
     }
 
-    const hex = bytes.map(b => b.toString(16).padStart(2, "0")).join("");
+    const hex = bytes
+        .reverse()
+        .slice(-16) 
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
 
     return [
         hex.slice(0, 8),

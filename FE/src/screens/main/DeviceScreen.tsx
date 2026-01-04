@@ -3,8 +3,8 @@ import { Text, View } from "react-native";
 
 const DeviceScreen = () => {
     return (
-        <View>
-            <Text>Device Screen</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', }}>
+            <Text style={{ color: 'black' }}>Chức năng đang phát triển</Text>
         </View>
     );
 };

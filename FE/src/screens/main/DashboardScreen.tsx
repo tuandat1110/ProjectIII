@@ -229,7 +229,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 5,
-    marginTop: 5
+    marginTop: 5,
+    color: "#333",
   },
 
   pickerBox: {
@@ -257,6 +258,7 @@ const styles = StyleSheet.create({
   },
   chartTitleText: {
     fontSize: 18,
-    fontWeight: '600'
+    fontWeight: '600',
+    color: '#222',
   },
 });

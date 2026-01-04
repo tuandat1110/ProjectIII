@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "144111083116",
+    "project_id": "flame-24d3c",
+    "storage_bucket": "flame-24d3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144111083116:android:3e8049e88b30f1bbec8249",
+        "android_client_info": {
+          "package_name": "com.projectiii"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC45scKj6WO96w6ei8M2N7lKBdIXQilmQM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

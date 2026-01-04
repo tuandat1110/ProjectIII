@@ -19,6 +19,7 @@ const char *mqtt_password = "Dat11102004";
 #define BUZZER_PIN 15
 #define RESET_BUTTON_PIN 12 
 #define RESET_HOLD_TIME 3000
+#define FLAME_PIN 27
 
 //i2c
 #define SDA_PIN 21

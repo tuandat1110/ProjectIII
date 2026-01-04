@@ -14,6 +14,8 @@ import { MqttModule } from './mqtt/mqtt.module';
 import { DeviceModule } from './device/device.module';
 import { InfluxModule } from './influx/influx.module';
 import { UploadModule } from './upload/upload.module';
+import { FcmModule } from './fcm/fcm.module';
+import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
   imports: [
@@ -27,7 +29,9 @@ import { UploadModule } from './upload/upload.module';
     MqttModule,
     DeviceModule,
     InfluxModule,
-    UploadModule
+    UploadModule,
+    FcmModule,
+    FirebaseModule
   ], 
   controllers: [AppController],
   providers: [AppService, MqttService, WebsocketGateway],

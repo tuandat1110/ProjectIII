@@ -8,7 +8,9 @@ import { useAddHouse, useGetHouses } from '../hooks/useHouses';
 import { House } from "../types/house";
 import { selectHome, setHomeInfo } from "../store/houseSlice";
 import Toast from "react-native-toast-message";
-
+import axiosClient from "../api/axiosClient";
+import messaging from '@react-native-firebase/messaging';
+import { base62ToUuid, uuidToBase62 } from "../utils/utils";
 
 interface IHeader {
     title: string,
@@ -50,9 +52,21 @@ const Header = ( {title, nameIcon}: IHeader) => {
             visibilityTime: 1000,
         })
     };
-    const handleSelect = (home: House) => {
+    const handleSelect = async (home: House) => {
         dispatch(setHomeInfo({ id: home.id, houseName: home.name }));
         setVisible(false);
+        try {
+            const token = await messaging().getToken();
+            await axiosClient.post('/fcm/register', {
+                token: token,
+                platform: 'android', // Hoặc dùng Platform.OS từ react-native
+                houseId: home.id,
+            });
+            
+            console.log(`Đã đăng ký token cho nhà: ${home.name}`);
+        } catch (error) {
+            console.error("Lỗi khi đăng ký lại token:", error);
+        }
     };
     return (
         <View
@@ -74,7 +88,7 @@ const Header = ( {title, nameIcon}: IHeader) => {
                     justifyContent: 'center',
                     alignItems: 'center'
                 }}
-                onPress={() => setVisible(true)}
+                onPress={() => { setVisible(true); console.log('Pressed!'); console.log(`visible: ${visible}`); }}
             >
                 <Text style={{ color: '#4e89c7ff', fontSize: 18, fontWeight: 'bold' }}>{title}</Text>
                 <Icon name="chevron-down" size={24} color="#4e89c7ff"  style={{marginTop: 4}}/>
@@ -93,7 +107,7 @@ const Header = ( {title, nameIcon}: IHeader) => {
                     <View style={styles.dropdownList}>
                         <FlatList
                             data={houses || []}
-                            keyExtractor={(item) => item.home_id}
+                            keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
                                 <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
                                     <Icon

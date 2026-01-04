@@ -3,6 +3,9 @@ import { connect, IClientOptions, IClientPublishOptions, MqttClient } from "mqtt
 import { WebsocketGateway } from '../websocket/websocket.gateway';
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { InfluxdbService } from "src/influx/influx.service";
+import { FirebaseService } from "src/firebase/firebase.service";
+import { PrismaService } from "src/prisma/prisma.service";
+import { base62ToUuid, uuidToBase62 } from "src/utils/utils";
 
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy{
@@ -10,14 +13,16 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
     private readonly logger = new Logger(MqttService.name);
     private readonly topics = [
         "home/+/+/dht11/data",   // sensor
-        "home/+/+/+/+/state"                     // feedback devices, + = wildcard
+        "home/+/+/+/+/state",                     // feedback devices, + = wildcard
+        "home/+/+/flame/alert"
     ];
-
 
     constructor(
         private readonly wsGateway: WebsocketGateway,
         private readonly eventEmitter: EventEmitter2,
         private readonly influxService: InfluxdbService,
+        private readonly firebaseService: FirebaseService, 
+        private readonly prisma: PrismaService,
     ) {}
 
     onModuleInit() {
@@ -61,7 +66,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
         this.client.on('offline', () => this.logger.log('MQTT offline'));
         this.client.on('error', (err) => this.logger.error('MQTT error: ' + err.message));
 
-        this.client.on('message', (topic, message: Buffer) => {
+        this.client.on('message', async (topic, message: Buffer) => {
             const payloadStr = message.toString();
             let parsed: any = payloadStr;
             try {
@@ -79,20 +84,48 @@ export class MqttService implements OnModuleInit, OnModuleDestroy{
                     raw: payloadStr,
                 });
             }
-
-            // bat websocket
-            try {
-                // tùy nhu cầu: emit cả topic, raw payload, timestamp...
-                if(topic.includes('dht11/data')) {
-                     const homeId = topic.split('/')[1];
+            if(topic.includes('dht11/data')) {
+                const homeId = topic.split('/')[1];
+                try {
                     this.wsGateway.sendSensorData(homeId, { topic, payload: parsed, receivedAt: new Date().toISOString() });
                     // const roomId = topic.split('/')[2]; 
                     const temp = parsed.temperature;
                     const humidity = parsed.humidity;
                     this.influxService.writeSensorData(homeId, temp, humidity);
+                }catch (e) {
+                    this.logger.error('Failed to emit websocket event: ' + (e as Error).message);
                 }
-            } catch (e) {
-                this.logger.error('Failed to emit websocket event: ' + (e as Error).message);
+            } 
+            if (topic.includes('/flame/alert')) {
+                const parts = topic.split('/');
+                const homeId = parts[1];
+                const roomId = parts[2];
+                const payloadStr = message.toString();
+                let parsed: any;
+
+                try {
+                    parsed = JSON.parse(payloadStr);
+                } catch (e) {
+                    this.logger.warn(`Invalid JSON payload for ${topic}`);
+                    return;
+                }
+
+                if (parsed.status === 1 || parsed.type === 'FIRE') {
+                    this.logger.warn(` FIRE ALERT at home=${homeId}, room=${roomId}`);
+                    const tokens = await this.prisma.fcmToken.findMany({
+                        where: { houseId: base62ToUuid(homeId) },
+                        select: { token: true },
+                    });
+
+                    if (!tokens.length) {
+                        this.logger.warn(`No FCM tokens found for homeId=${homeId}`);
+                        return;
+                    }
+                    await this.firebaseService.sendFireAlert(
+                        tokens.map((t) => t.token),
+                        { homeId, roomId },
+                    );
+                }
             }
         })
     }
