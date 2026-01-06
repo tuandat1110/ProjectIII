@@ -352,6 +352,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 12,
     textAlign: "center",
+    color: "#222",
   },
   input: {
     borderWidth: 1,
@@ -359,6 +360,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 20,
+    color: 'black'
   },
   actions: {
     flexDirection: "row",
