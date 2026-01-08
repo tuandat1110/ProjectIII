@@ -13,7 +13,7 @@ public:
     void init();
 
     // Hiển thị thông tin (Dùng const char* thay cho String)
-    void showSystemInfo(const char* homeId);
+    void showSystemInfo(int x, int y, const char* message);
 };
 
 #endif

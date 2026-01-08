@@ -132,11 +132,16 @@ void TaskFlameSensor(void *pvParameters) {
     int lastFlameState = HIGH; // HIGH = không cháy (phổ biến với flame sensor)
     unsigned long lastPublishTime = 0;
     const unsigned long debounceTime = 3000; // chống spam (3s)
-
+    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(BUZZER_PIN, LOW);
     for (;;) {
         int flameState = digitalRead(FLAME_PIN);
         unsigned long now = millis();
-
+        if (flameState == LOW) {
+            digitalWrite(BUZZER_PIN, HIGH); 
+        } else {
+            digitalWrite(BUZZER_PIN, LOW);
+        }
         // Chỉ xử lý khi trạng thái thay đổi
         if (flameState != lastFlameState && (now - lastPublishTime > debounceTime)) {
 
@@ -146,11 +151,11 @@ void TaskFlameSensor(void *pvParameters) {
                 if (flameState == LOW) {
                     // PHÁT HIỆN CHÁY
                     payload = "{\"type\":\"FIRE\",\"status\":1}";
-                    Serial.println("🔥 FIRE DETECTED!");
+                    Serial.println(" FIRE DETECTED!");
                 } else {
                     // HẾT CHÁY
                     payload = "{\"type\":\"FIRE\",\"status\":0}";
-                    Serial.println("✅ FIRE CLEARED");
+                    Serial.println(" FIRE CLEARED");
                 }
 
                 mqtt.publish(flamePublishTopic.c_str(), payload.c_str(), true);
@@ -179,7 +184,7 @@ void setup() {
     ledQueue = xQueueCreate(30, sizeof(LedCommand));
 
     ui.init(); 
-    ui.showSystemInfo("WIFI CONNECTING...");
+    ui.showSystemInfo(10, 32, "WIFI CONNECTING...");
 
     wifi.connect(); 
 
@@ -193,8 +198,10 @@ void setup() {
         subscribeCommandTopic = "home/" + CONTROLLER_ID + "/+/+/+/cmd";
         sensorPublishTopic = "home/" + hId + "/" + rId + "/dht11/data";
         flamePublishTopic = "home/" + hId + "/" + rId + "/flame/alert";
-        ui.showSystemInfo(chipStr);
-        
+        char message[100];
+        snprintf(message, sizeof(message), "MAC:%s", chipStr);
+        ui.showSystemInfo(10, 32, message);
+
         mqtt.init(mqtt_server, mqtt_port, callback);
         dht.begin();
 
@@ -211,7 +218,7 @@ void loop() {
         while (digitalRead(RESET_BUTTON_PIN) == LOW) {
             if (millis() - startTime > RESET_HOLD_TIME) {
                 Serial.println("Đang xóa cấu hình và khởi động lại...");
-                ui.showSystemInfo("RESETING...");
+                ui.showSystemInfo(10, 32, "RESETING...");
                 wifi.resetSettings(); 
                 delay(1000);
                 ESP.restart(); 

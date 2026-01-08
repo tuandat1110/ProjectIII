@@ -14,12 +14,10 @@ void DisplayService::init() {
     _display.display();
 }
 
-void DisplayService::showSystemInfo(const char* homeId) {
+void DisplayService::showSystemInfo(int x, int y, const char* message) {
     _display.clearDisplay();
-    _display.setCursor(10, 20);
-    _display.println("Home ID:");
-    _display.setCursor(10, 32);
-    _display.println(homeId); // In chuỗi char*
+    _display.setCursor(x, y);
+    _display.println(message);
     _display.display();
 }
 

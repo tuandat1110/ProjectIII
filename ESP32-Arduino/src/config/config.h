@@ -6,7 +6,7 @@ const char *password = "11102004";
 
 // MQTT broker
 //"290a5491b2bd4ac1aae8fa40f2fcd698.s1.eu.hivemq.cloud"
-const char *mqtt_server = "192.168.0.102";
+const char *mqtt_server = "192.168.0.104";
 const int mqtt_port = 1883;
 const char *mqtt_user = "tuandat1110";
 const char *mqtt_password = "Dat11102004";

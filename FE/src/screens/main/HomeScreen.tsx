@@ -48,7 +48,7 @@ const HomeScreen = () => {
   const userId = useSelector((state: RootState) => state.auth.user?.id);
   const { mutate, isPending } = useAddRoom(currentSelectedId as string);
 
-  const { data: rooms, isLoading, error } = useGetRooms(currentSelectedId as string);
+  const { data: rooms, isLoading, error, isFetching, refetch } = useGetRooms(currentSelectedId as string);
 
   const removePrefix = (name: string) => {
     if (!name) return "";
@@ -297,12 +297,14 @@ const HomeScreen = () => {
               </TouchableOpacity>       
             ) : (          
                 <RoomCard room={item} />
-        )}
+          )}
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: "space-between" }}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{paddingBottom: 100}}
+          refreshing={isFetching}
+          onRefresh={refetch}
         />
       </View>
     </View>

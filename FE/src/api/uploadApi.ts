@@ -18,7 +18,7 @@ export const uploadAvatarApi = async (
     } as any);
 
     const res = await axios.post(
-        "http://192.168.0.102:3000/upload/avatar",
+        "http://192.168.0.104:3000/upload/avatar",
         formData,
         {
         headers: {
