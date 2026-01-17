@@ -1,85 +1,66 @@
 # ProjectIII
 
-ProjectIII is an IoT home automation project that includes a NestJS backend, ESP32 firmware, and a React Native mobile app. The backend handles authentication, reads sensor data via MQTT, controls LEDs, and provides CRUD APIs for homes, rooms, and LEDs. The ESP32 firmware reads sensors and responds to control commands (LEDs). The React Native app renders real-time data for users and allows control of devices.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![build](https://github.com/tuandat1110/ProjectIII/actions/workflows/ci.yml/badge.svg)](https://github.com/tuandat1110/ProjectIII/actions/workflows/ci.yml)
 
-## Repository structure (typical)
+ProjectIII is an IoT home automation project composed of three main parts:
+- A NestJS backend that handles authentication, MQTT messaging, device control, and CRUD operations for homes, rooms, and LEDs.
+- ESP32 firmware that reads sensors and responds to commands (LED control).
+- A React Native mobile app that renders real-time data and provides controls for users.
 
-- /backend - NestJS server (auth, MQTT client, REST API)
-- /firmware - ESP32 firmware (sensor reading, LED control)
-- /mobile or /app - React Native frontend
-- /scripts - helper scripts (docker, setup)
+This repository contains source for the backend, firmware, and mobile app and helper scripts to run the stack locally.
 
-Adjust paths above if your repository layout differs.
+Table of Contents
+- [Repository layout](#repository-layout)
+- [Key features](#key-features)
+- [Architecture overview](#architecture-overview)
+- [MQTT topics and payload examples](#mqtt-topics-and-payload-examples)
+- [Getting started (quick)](#getting-started-quick)
+- [Using docker-compose for dev](#using-docker-compose-for-dev)
+- [Simulating ESP32 telemetry locally](#simulating-esp32-telemetry-locally)
+- [CI](#ci)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Features
+Repository layout
 
-- NestJS backend  
-  - Authentication (JWT or session-based)  
-  - MQTT client to read sensor data and publish commands  
-  - LED control logic  
-  - CRUD APIs for Home, Room, and LED resources  
-- ESP32 firmware  
-  - Periodically reads sensors (e.g., temperature, humidity, light)  
-  - Publishes sensor data to MQTT topics  
-  - Subscribes to command topics to toggle or dim LEDs  
-- React Native frontend  
-  - Real-time data visualization  
-  - Controls to toggle LEDs and configure devices
+- `/backend` - NestJS server (authentication, MQTT client, REST / WebSocket API, DB)
+- `/firmware` - ESP32 firmware (sensor readings, MQTT publish/subscribe, control handlers)
+- `/mobile` or `/app` - React Native frontend (UI + realtime display + control)
+- `/scripts` - helper scripts (docker-compose helpers, simulation scripts)
+- `/.github/workflows` - CI workflows
 
-## Architecture overview
+Key features
 
-1. ESP32 devices connect to local Wi-Fi and publish sensor readings to an MQTT broker.
-2. The NestJS backend subscribes to relevant MQTT topics, processes messages, and stores data in the database.
-3. The backend exposes REST APIs and (optionally) WebSocket endpoints for the frontend.
-4. The React Native app consumes the API and/or receives real-time updates to show sensor values and control devices.
+- NestJS backend
+  - Authentication (JWT)
+  - MQTT client to receive sensor telemetry and publish device commands
+  - REST CRUD endpoints for Home, Room, LED, Device
+  - Optional WebSocket / Server-Sent Events for realtime UI updates
+  - Persistent storage (Postgres)
+- ESP32 firmware
+  - Reads sensors (temperature, humidity, light)
+  - Publishes telemetry to MQTT topics
+  - Subscribes to command topics to toggle/dim LEDs
+- React Native frontend
+  - Real-time data visualization and controls
+  - Authentication and device management
 
-MQTT topic examples (customize to your implementation):
+Architecture overview
 
-- sensor/{homeId}/{roomId}/{deviceId}/telemetry
-- command/{homeId}/{roomId}/{deviceId}/led/set
-- status/{homeId}/{roomId}/{deviceId}
+1. ESP32 devices connect to local Wi-Fi and publish telemetry to an MQTT broker.
+2. NestJS backend subscribes to those topics, processes telemetry, and stores them in the database.
+3. Backend exposes REST APIs and WebSocket for live updates.
+4. React Native app authenticates with the backend and fetches data via REST and/or listens for realtime events; it can send commands which the backend publishes to MQTT.
 
-## Getting started
+MQTT topics and payload examples
 
-### Prerequisites
+- Telemetry: `sensor/{homeId}/{roomId}/{deviceId}/telemetry`
+- Command: `command/{homeId}/{roomId}/{deviceId}/led/set`
+- Status/heartbeat: `status/{homeId}/{roomId}/{deviceId}`
 
-- Node.js (16+ recommended)
-- npm or yarn
-- Docker & Docker Compose (optional, for MQTT broker and database)
-- ESP32 toolchain (PlatformIO or ESP-IDF) to build and flash firmware
-- Android Studio / Xcode or Expo for running the React Native app
+Telemetry payload example:
 
-### Backend (NestJS)
-
-1. cd backend
-2. Copy `.env.example` to `.env` and fill required values (see example below).
-3. Install dependencies: `npm install` or `yarn`.
-4. Run migrations if applicable (TypeORM / Prisma). Example: `npm run typeorm:migrate`.
-5. Start the server: `npm run start:dev`.
-
-Example environment variables (adjust to your implementation):
-
-```
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=your_jwt_secret
-DATABASE_URL=postgres://user:pass@localhost:5432/projectiii
-MQTT_BROKER_URL=mqtt://localhost:1883
-MQTT_USERNAME=
-MQTT_PASSWORD=
-```
-
-### ESP32 firmware
-
-1. cd firmware/esp32
-2. Configure Wi-Fi and MQTT credentials in the firmware config (often in `config.h` or environment file).
-3. Build and flash using PlatformIO or ESP-IDF. Example with PlatformIO:
-   - `platformio run --target upload`
-4. Monitor serial output to confirm sensor readings and MQTT connection.
-
-MQTT telemetry example payload (JSON):
-
-```
+```json
 {
   "deviceId": "esp32-01",
   "temperature": 26.4,
@@ -89,50 +70,68 @@ MQTT telemetry example payload (JSON):
 }
 ```
 
-### React Native app
+Command payload example:
+
+```json
+{
+  "state": "ON",
+  "brightness": 128
+}
+```
+
+Getting started (quick)
+
+Prerequisites
+- Node.js 16+
+- npm or yarn
+- Docker & Docker Compose (recommended for local MQTT broker and DB)
+- PlatformIO or ESP-IDF for flashing ESP32
+- Android Studio / Xcode or Expo for React Native
+
+Backend (NestJS) quick start
+
+1. cd backend
+2. Copy `.env.example` to `.env` and update values
+3. Install dependencies: `npm install`
+4. Run migrations if used (TypeORM / Prisma)
+5. Start server: `npm run start:dev`
+
+ESP32 firmware quick start
+
+1. cd firmware
+2. Edit `platformio.ini` or firmware config with Wi-Fi and MQTT credentials
+3. Build & flash using PlatformIO: `platformio run --target upload`
+
+React Native app quick start
 
 1. cd mobile
-2. Install dependencies: `npm install` or `yarn`.
-3. If using Expo: `expo start`.
-4. If using React Native CLI: run on a device/emulator: `npx react-native run-android` or `npx react-native run-ios`.
-5. Configure the app with the backend URL and any API keys in a config file or environment variables.
+2. Install: `npm install`
+3. If using Expo: `expo start` or RN CLI: `npx react-native run-android`
 
-## API (examples)
+Using docker-compose for dev
 
-The backend exposes CRUD endpoints for resources. Example endpoints:
+A docker-compose file is included at `docker-compose.yml` to start a local MQTT broker (Mosquitto) and Postgres DB for development. Example:
 
-- POST /auth/login
-- GET /homes
-- POST /homes
-- GET /homes/:homeId/rooms
-- POST /homes/:homeId/rooms
-- GET /rooms/:roomId/leds
-- POST /rooms/:roomId/leds
-- POST /devices/:deviceId/command (to send MQTT command)
+```bash
+# start services
+docker-compose up -d
 
-Adjust the exact routes to match your implementation.
+# stop services
+docker-compose down
+```
 
-## MQTT topic and payload recommendations
+Simulating ESP32 telemetry locally
 
-- Telemetry topic: `sensor/{home}/{room}/{device}/telemetry` — payload is JSON with sensor values
-- Command topic: `command/{home}/{room}/{device}/led/set` — payload example: `{"state": "ON", "brightness": 128}`
-- Status/heartbeat topic: `status/{home}/{room}/{device}` — device publishes periodically to indicate it's online
+A small Node.js simulator is provided at `scripts/simulate.js` that publishes example telemetry to the MQTT broker for local testing. Configure the `.env` values or pass broker URL on the command line.
 
-## Development tips
+CI
 
-- Use a local MQTT broker (e.g., Eclipse Mosquitto) during development and Docker Compose to spin up broker + DB.
-- Add logging to MQTT message handlers to make debugging easier.
-- Simulate ESP32 messages with a simple Node.js script publishing JSON payloads to the broker.
-- Secure your MQTT broker in production with authentication and TLS.
+A basic GitHub Actions workflow is provided at `.github/workflows/ci.yml`. It runs on pushes and pull requests to `main` and will install dependencies and run tests for each package/folder that has a `package.json`.
 
-## Contributing
+Contributing
 
-Contributions are welcome. Please open an issue or a pull request describing the change.
+See `CONTRIBUTING.md` for contribution guidelines, commit message style, and PR expectations.
 
-## License
+License
 
-Specify your license here (e.g., MIT).
-
-## Contact
-
-For questions, reach out to the maintainers or open an issue in this repository.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
